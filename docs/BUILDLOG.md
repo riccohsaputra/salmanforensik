@@ -15,3 +15,9 @@
   core.xml-nya menulis ISO cacat "...+00:00Z" sehingga parse gagal dan bukti waktu null lolos.
   Perbaikan: parseAnyDate menormalkan offset+Z; engine menyaring bukti null di semua parser;
   app & evaluateAgeRules diperkeras. Tes regresi ditambah: total core 23/23, engine 14/14.
+- 2026-11-13 (revisi UI atas permintaan Ricco): switcher tema segmented (Terang/Gelap/Otomatis)
+  diganti satu tombol ikon bulat — ☀️ Terang, 🌙 Gelap, ◐ Otomatis — tiap ketuk memutar
+  Terang → Gelap → Otomatis; preferensi tetap di localStorage "sf-theme", default Otomatis.
+  Dikerjakan Antigravity (Gemini 3.8 Flash High) setelah OpenCode hang tanpa hasil;
+  diff direview baris demi baris oleh Rumi, tes tetap core 23/23 + engine 14/14,
+  siklus tombol diuji klik di browser headless (Playwright + Chromium).

@@ -30,6 +30,13 @@ header.topbar {
 .privacy-badge { background: rgba(52,199,89,.14); color: var(--green); border: 1px solid rgba(52,199,89,.35);
   padding: 3px 10px; border-radius: 999px; font-size: .78rem; font-weight: 600; }
 .topbar .spacer { flex: 1; }
+.theme-toggle {
+  width: 34px; height: 34px; border-radius: 50%; border: 0;
+  background: var(--chip); color: var(--text); font-size: 1rem;
+  cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+  padding: 0; transition: filter .15s;
+}
+.theme-toggle:hover { filter: brightness(1.15); }
 .segmented { display: inline-flex; background: var(--chip); border-radius: 10px; padding: 2px; gap: 2px; }
 .segmented button { border: 0; background: transparent; color: var(--text2); padding: 5px 12px; border-radius: 8px;
   font: inherit; font-size: .85rem; cursor: pointer; }

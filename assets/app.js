@@ -12,21 +12,35 @@
   const humanSize = (n) => n > 1048576 ? (n / 1048576).toFixed(2) + " MB" : n > 1024 ? (n / 1024).toFixed(1) + " KB" : n + " B";
 
   /* ---------- Tema ---------- */
-  const themeSwitch = $("#theme-switch");
+  const themeToggle = $("#theme-toggle");
+  const THEME_META = {
+    light: { icon: "☀️", label: "Terang" },
+    dark: { icon: "🌙", label: "Gelap" },
+    auto: { icon: "◐", label: "Otomatis" }
+  };
+  const THEME_CYCLE = { light: "dark", dark: "auto", auto: "light" };
+
   function applyTheme(val) {
     const eff = val === "auto" ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : val;
     document.documentElement.dataset.theme = eff;
-    themeSwitch.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.themeVal === val));
+    const meta = THEME_META[val] || THEME_META.auto;
+    if (themeToggle) {
+      themeToggle.textContent = meta.icon;
+      const desc = `Tema: ${meta.label} — ketuk untuk mengganti tema`;
+      themeToggle.title = desc;
+      themeToggle.setAttribute("aria-label", desc);
+    }
   }
   let themePref = "auto";
   try { themePref = localStorage.getItem("sf-theme") || "auto"; } catch (e) { /* abaikan */ }
   applyTheme(themePref);
-  themeSwitch.addEventListener("click", (e) => {
-    const b = e.target.closest("button"); if (!b) return;
-    themePref = b.dataset.themeVal;
-    try { localStorage.setItem("sf-theme", themePref); } catch (err) { /* abaikan */ }
-    applyTheme(themePref);
-  });
+  if (themeToggle) {
+    themeToggle.addEventListener("click", () => {
+      themePref = THEME_CYCLE[themePref] || "light";
+      try { localStorage.setItem("sf-theme", themePref); } catch (err) { /* abaikan */ }
+      applyTheme(themePref);
+    });
+  }
   matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => { if (themePref === "auto") applyTheme("auto"); });
 
   /* ---------- State sesi (memori saja) ---------- */
