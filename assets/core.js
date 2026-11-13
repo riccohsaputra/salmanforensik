@@ -52,7 +52,9 @@
       const dt = new Date(`${exif[1]}-${exif[2]}-${exif[3]}T${exif[4]}:${exif[5]}:${exif[6]}`);
       return isNaN(dt) ? null : dt;
     }
-    const dt = new Date(s);
+    // Sebagian generator (mis. openpyxl) menulis ISO cacat: offset + "Z" sekaligus
+    const cleaned = s.replace(/([+-]\d{2}:?\d{2})Z$/, "$1");
+    const dt = new Date(cleaned);
     return isNaN(dt) ? null : dt;
   }
 
@@ -104,7 +106,7 @@
    * ctx: {examDate, claimDate (Date|null), techHits:[{label,year}], embeddedYounger:bool} */
   function evaluateAgeRules(evidence, ctx) {
     const findings = [];
-    const ev = (evidence || []).filter(e => e.date instanceof Date && !isNaN(e.date));
+    const ev = (evidence || []).filter(e => e && e.date instanceof Date && !isNaN(e.date));
     const creations = ev.filter(e => e.role === "creation").map(e => e.date);
     const mods = ev.filter(e => e.role === "modification").map(e => e.date);
     const push = (ruleId, severity, title, observed, explanation, confidence) =>

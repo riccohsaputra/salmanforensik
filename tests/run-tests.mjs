@@ -21,6 +21,8 @@ t("PDF date Z", d2 && d2.toISOString() === "2024-01-01T00:00:00.000Z");
 const d3 = C.parseAnyDate("2025:03:14 09:12:44");
 t("EXIF date terbaca", d3 && d3.getFullYear() === 2025 && d3.getMonth() === 2);
 t("Tanggal rusak -> null", C.parseAnyDate("bukan tanggal") === null);
+const d4 = C.parseAnyDate("2026-11-13T04:05:44+00:00Z");
+t("ISO cacat ala openpyxl (offset+Z) tetap terbaca", d4 && d4.toISOString() === "2026-11-13T04:05:44.000Z");
 
 console.log("Aturan umur:");
 const exam = new Date("2026-11-13T00:00:00Z");

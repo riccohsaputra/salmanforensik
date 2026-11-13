@@ -128,6 +128,7 @@
       out.coveragePenalty += 0.15;
     }
     out.meta.techTexts = [info.producer, info.creator, out.meta.xmp && out.meta.xmp.producer, ...out.fonts];
+    out.timestamps = out.timestamps.filter(Boolean);
     return out;
   }
 
@@ -207,6 +208,7 @@
       [...p[0].matchAll(/<w:t[^>]*>([^<]*)<\/w:t>/g)].map(t => t[1]).join("")).filter(Boolean);
     out.text = paras.join("\n");
     out.pageCount = null;
+    out.timestamps = out.timestamps.filter(Boolean);
     return out;
   }
 
@@ -301,6 +303,7 @@
       `${hiddenRows} baris & ${hiddenCols} kolom tersembunyi`, "Lembar kerja XLSX", "Atribut hidden pada baris/kolom.",
       "Data tersembunyi tetap terbaca mesin dan relevan untuk pemeriksaan menyeluruh."));
     out.pageCount = allSheets.length;
+    out.timestamps = out.timestamps.filter(Boolean);
     return out;
   }
 
@@ -386,6 +389,7 @@
         "ELA HANYA petunjuk awal berkepercayaan rendah: nilai tinggi dapat berasal dari pemrosesan kamera yang sah. Tidak dipakai sebagai bukti tunggal.", "low"));
     } catch (e) { out.moduleNotes.push("ELA tidak dijalankan: " + e.message); }
     out.pageCount = 1;
+    out.timestamps = out.timestamps.filter(Boolean);
     return out;
   }
 

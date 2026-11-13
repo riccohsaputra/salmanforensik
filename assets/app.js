@@ -158,6 +158,7 @@
       else if (k === "docx") res = await E.analyzeDocx(sBuf);
       else if (k === "xlsx") res = await E.analyzeXlsx(sBuf);
       else res = await E.analyzeImage(sBuf, k);
+      res.timestamps = (res.timestamps || []).filter(Boolean);
       session.result = res;
       guard();
       setStage(2, "done", res.timestamps.length + " bukti waktu");

@@ -44,6 +44,8 @@ t("U-01 terdeteksi pada DOCX", ageDocx.some(f => f.ruleId === "U-01"), JSON.stri
 
 console.log("XLSX nilai ditimpa:");
 const xlsxBad = await E.analyzeXlsx(buf("xlsx-nilai-ditimpa.xlsx"));
+t("tidak ada bukti waktu null pada XLSX (regresi crash 'role')", xlsxBad.timestamps.every(x => x && x.date), JSON.stringify(xlsxBad.timestamps.map(x => x && x.source)));
+t("core created/modified XLSX terbaca meski format ISO cacat", xlsxBad.timestamps.some(x => x.source === "ooxml.core.created") && xlsxBad.timestamps.some(x => x.source === "ooxml.core.modified"));
 t("XL-02 mismatch formula vs nilai = kritis", xlsxBad.findings.some(f => f.ruleId === "XL-02" && f.severity === "critical"),
   JSON.stringify(xlsxBad.findings.map(f => f.ruleId + ":" + f.severity)));
 

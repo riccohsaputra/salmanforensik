@@ -11,3 +11,7 @@
   XLSX nilai ditimpa (XL-02 kritis), JPEG EXIF lengkap. Bug U-07 (Math.max atas objek bukti)
   ditemukan tes dan diperbaiki + fmtWIB diperkeras terhadap tanggal invalid.
 - Catatan harness: JSZip async() menggantung di realm jsdom — artefak lingkungan tes, bukan aplikasi.
+- 2026-11-13 (perbaikan pasca-uji live): crash "reading 'role'" pada XLSX hasil openpyxl —
+  core.xml-nya menulis ISO cacat "...+00:00Z" sehingga parse gagal dan bukti waktu null lolos.
+  Perbaikan: parseAnyDate menormalkan offset+Z; engine menyaring bukti null di semua parser;
+  app & evaluateAgeRules diperkeras. Tes regresi ditambah: total core 23/23, engine 14/14.
