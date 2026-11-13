@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SalmanForensik — Screening Forensik Dokumen Digital</title>
+<meta name="description" content="Screening awal forensik dokumen digital: telusuri umur, riwayat perubahan, dan indikasi manipulasi dokumen PDF, DOCX, XLSX, dan gambar — 100% diproses di browser Anda, tanpa unggah ke server.">
+<link rel="stylesheet" href="assets/theme.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23007AFF'/><circle cx='44' cy='44' r='20' fill='none' stroke='white' stroke-width='8'/><line x1='59' y1='59' x2='80' y2='80' stroke='white' stroke-width='9' stroke-linecap='round'/></svg>">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="logo">🔍</span> SalmanForensik</div>
+  <span class="privacy-badge">🔒 100% diproses di browser Anda — file tidak diunggah</span>
+  <div class="spacer"></div>
+  <div class="segmented" id="theme-switch" role="group" aria-label="Tema tampilan">
+    <button data-theme-val="light">Terang</button>
+    <button data-theme-val="dark">Gelap</button>
+    <button data-theme-val="auto" class="active">Otomatis</button>
+  </div>
+  <button class="btn danger small" id="btn-wipe">Hapus Sesi</button>
+</header>
+
+<main>
+  <!-- ============ PERSIAPAN ============ -->
+  <section id="view-start">
+    <div class="hero">
+      <div class="kicker">Screening Forensik Dokumen Digital</div>
+      <h1>Telusuri umur &amp; riwayat<br>dokumen Anda.</h1>
+      <p class="lead">Periksa kapan sebuah dokumen dibuat dan diubah, temukan indikasi manipulasi pada struktur &amp; isinya, lalu terima rekomendasi rujukan ke pihak yang berwenang. Semua berjalan di perangkat Anda — dokumen tidak pernah meninggalkan browser.</p>
+      <p class="note">⚠️ SalmanForensik adalah alat <strong>screening awal</strong>, bukan penetapan keaslian. Hasilnya menjadi bahan untuk verifikasi ke penerbit dokumen atau pemeriksaan forensik formal.</p>
+    </div>
+
+    <div class="card">
+      <h2>1 · Dokumen yang diperiksa</h2>
+      <div class="dropzone" id="drop-suspect" tabindex="0">
+        <div class="big">📄</div>
+        <div><strong>Tarik &amp; letakkan berkas di sini</strong>, atau klik untuk memilih</div>
+        <div class="note">PDF · DOCX · XLSX · JPG · PNG — maks dianjurkan 50 MB</div>
+      </div>
+      <input type="file" id="file-suspect" class="hidden" accept=".pdf,.docx,.xlsx,.jpg,.jpeg,.png">
+      <div id="suspect-card"></div>
+      <div id="suspect-warn"></div>
+
+      <details class="opt">
+        <summary>+ Tambah dokumen pembanding (opsional)</summary>
+        <div class="dropzone" id="drop-ref" tabindex="0" style="margin-top:12px">
+          <div class="big">📑</div>
+          <div><strong>Dokumen pembanding asli</strong> — tarik &amp; letakkan atau klik</div>
+          <div class="note">Perbandingan mengaktifkan uji garis keturunan &amp; perbedaan isi</div>
+        </div>
+        <input type="file" id="file-ref" class="hidden" accept=".pdf,.docx,.xlsx,.jpg,.jpeg,.png">
+        <div id="ref-card"></div>
+      </details>
+
+      <details class="opt">
+        <summary>+ Detail konteks pemeriksaan (opsional, mempertajam hasil &amp; rujukan)</summary>
+        <div class="grid2">
+          <div>
+            <label class="f" for="ctx-type">Jenis dokumen</label>
+            <select id="ctx-type">
+              <option value="lainnya">Lainnya / tidak tahu</option>
+              <option value="ijazah">Ijazah / Transkrip</option>
+              <option value="sertifikat">Sertifikat</option>
+              <option value="surat">Surat Instansi / Perusahaan</option>
+              <option value="keuangan">Dokumen Keuangan</option>
+              <option value="tanah">Dokumen Tanah</option>
+              <option value="kependudukan">Dokumen Kependudukan</option>
+              <option value="akta">Akta / Kontrak</option>
+              <option value="pengadilan">Dokumen Pengadilan</option>
+            </select>
+          </div>
+          <div>
+            <label class="f" for="ctx-purpose">Tujuan pemeriksaan</label>
+            <select id="ctx-purpose">
+              <option value="pribadi">Cek pribadi</option>
+              <option value="instansi">Kebutuhan instansi</option>
+              <option value="sengketa">Ada sengketa</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid2">
+          <div><label class="f" for="ctx-issuer">Nama penerbit dokumen</label>
+          <input type="text" id="ctx-issuer" placeholder="mis. Universitas Contoh / PT Contoh"></div>
+          <div><label class="f" for="ctx-claim">Tanggal tertera / diklaim pada dokumen</label>
+          <input type="date" id="ctx-claim"></div>
+        </div>
+        <div><label class="f" for="ctx-examiner">Nama pemeriksa (untuk laporan)</label>
+        <input type="text" id="ctx-examiner" placeholder="Opsional"></div>
+      </details>
+
+      <div style="margin-top:18px; display:flex; gap:10px; flex-wrap:wrap; align-items:center">
+        <button class="btn" id="btn-start" disabled>🔎 Mulai Pemeriksaan</button>
+        <span class="note">Pemeriksaan berjalan lokal. Jangan tutup tab selama proses — sesi &amp; hasil akan hilang, sesuai desain privasi.</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Cara kerja — 3 langkah</h2>
+      <p><strong>① Pilih dokumen</strong> (dan pembanding bila ada) → <strong>② Klik Mulai Pemeriksaan</strong> dan saksikan tahapannya berjalan → <strong>③ Terima hasil detail</strong>: timeline umur, temuan, kesimpulan screening, dan rekomendasi rujukan — lalu unduh laporan PDF + JSON teknisnya.</p>
+      <p class="note">Format yang didukung: PDF, DOCX, XLSX, JPG, PNG — termasuk foto dokumen hasil print sebagai berkas gambar. Dari foto, yang diperiksa adalah umur <em>berkas gambarnya</em> dan indikasi visual; umur fisik kertas/tinta memerlukan pemeriksaan dokumen fisik di laboratorium.</p>
+    </div>
+  </section>
+
+  <!-- ============ PROSES ============ -->
+  <section id="view-progress" class="hidden">
+    <div class="card">
+      <h2>Sedang memeriksa… <span class="note" id="elapsed"></span></h2>
+      <div class="progress"><div id="progress-bar"></div></div>
+      <div class="note" id="progress-label">Menyiapkan…</div>
+      <ul class="stages" id="stage-list"></ul>
+      <div class="chips">
+        <span class="chip crit" id="cnt-crit">0 kritis</span>
+        <span class="chip susp" id="cnt-susp">0 mencurigakan</span>
+        <span class="chip info" id="cnt-info">0 info</span>
+      </div>
+      <div id="live-results"></div>
+      <button class="btn secondary" id="btn-cancel">Batalkan Pemeriksaan</button>
+    </div>
+  </section>
+
+  <!-- ============ HASIL ============ -->
+  <section id="view-results" class="hidden">
+    <div class="banner judging" id="conclusion-banner">
+      <h2 id="conclusion-title">Menilai…</h2>
+      <div id="conclusion-sub"></div>
+    </div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap" class="noprint">
+      <button class="btn" id="btn-pdf">⬇️ Unduh Laporan PDF</button>
+      <button class="btn secondary" id="btn-json">⬇️ Unduh JSON Teknis</button>
+      <button class="btn secondary" id="btn-again">Periksa Berkas Lain</button>
+    </div>
+    <div class="segmented tabs noprint" id="result-tabs" style="margin-top:16px">
+      <button data-tab="ringkasan" class="active">Ringkasan</button>
+      <button data-tab="timeline">Timeline Umur</button>
+      <button data-tab="temuan">Temuan</button>
+      <button data-tab="struktur">Struktur &amp; Objek</button>
+      <button data-tab="pembanding">Pembanding</button>
+      <button data-tab="metodologi">Metodologi &amp; Batasan</button>
+    </div>
+    <div id="tab-ringkasan" class="tabpage active"></div>
+    <div id="tab-timeline" class="tabpage"></div>
+    <div id="tab-temuan" class="tabpage"></div>
+    <div id="tab-struktur" class="tabpage"></div>
+    <div id="tab-pembanding" class="tabpage"></div>
+    <div id="tab-metodologi" class="tabpage"></div>
+  </section>
+
+  <div id="print-area"></div>
+</main>
+
+<footer class="appfoot">
+  SalmanForensik — created by Ricco Abu Salman · Alat screening awal, bukan penetapan keaslian ·
+  Dokumen Anda tidak pernah dikirim ke server; tutup tab atau tekan <em>Hapus Sesi</em> untuk membersihkan sesi.
+</footer>
+
+<script src="vendor/jszip.min.js"></script>
+<script src="vendor/exifr.umd.js"></script>
+<script src="vendor/pdf.min.js"></script>
+<script src="assets/core.js"></script>
+<script src="assets/engine.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
