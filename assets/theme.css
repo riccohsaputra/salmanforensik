@@ -25,7 +25,8 @@ header.topbar {
   border-bottom: 1px solid var(--hairline); flex-wrap: wrap;
 }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.15rem; letter-spacing: -.01em; }
-.brand .logo { width: 30px; height: 30px; display: block; }
+.brand .logo-wordmark { height: 42px; width: auto; display: block; color: #16181d; }
+[data-theme="dark"] .brand .logo-wordmark { color: #ffffff; }
 .privacy-badge { background: rgba(52,199,89,.14); color: var(--green); border: 1px solid rgba(52,199,89,.35);
   padding: 3px 10px; border-radius: 999px; font-size: .78rem; font-weight: 600; }
 .topbar .spacer { flex: 1; }
