@@ -79,11 +79,11 @@ details.opt { margin-top: 14px; } details.opt summary { cursor: pointer; font-we
 .progress { height: 10px; background: var(--chip); border-radius: 99px; overflow: hidden; margin: 12px 0 4px; }
 .progress > div { height: 100%; background: var(--accent); width: 0%; transition: width .4s; border-radius: 99px; }
 .banner { border-radius: 16px; padding: 18px 20px; color: #fff; margin: 16px 0; }
-.banner.none { background: linear-gradient(135deg, #248a3d, var(--green)); }
-.banner.weak { background: linear-gradient(135deg, #c93400, var(--orange)); }
-.banner.strong { background: linear-gradient(135deg, #d70015, var(--red)); }
-.banner.insufficient { background: linear-gradient(135deg, #48484a, #8e8e93); }
-.banner.judging { background: linear-gradient(135deg, #48484a, #636366); }
+.banner.none { background: #248a3d; }
+.banner.weak { background: #cc6a00; }
+.banner.strong { background: #d70015; }
+.banner.insufficient { background: #636366; }
+.banner.judging { background: #48484a; }
 .banner h2 { margin: 0 0 4px; font-size: 1.35rem; }
 .chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
 .chip { background: var(--chip); border-radius: 999px; padding: 4px 12px; font-size: .85rem; font-weight: 600; }
