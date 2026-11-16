@@ -398,6 +398,15 @@
     /* Metodologi */
     $("#tab-metodologi").innerHTML = `<div class="card"><h2>Metodologi &amp; batasan</h2>
       <p>Pemeriksaan mengikuti Spesifikasi SalmanForensik v1.0: akuisisi &amp; hash SHA-256, identifikasi magic bytes, ekstraksi metadata &amp; bukti waktu multi-sumber, pembangunan timeline dengan aturan U-01…U-10, pemeriksaan struktur/konten per format (PF/DC/XL/IM), uji pembanding (PB) bila ada, penilaian berbasis aturan deterministik, dan rekomendasi rujukan.</p>
+      <h3>Keterangan kode aturan</h3>
+      <ul>
+        <li><strong>U</strong> — umur berkas (riwayat tanggal pembuatan &amp; perubahan).</li>
+        <li><strong>PF</strong> — berkas PDF.</li>
+        <li><strong>DC</strong> — berkas Word (DOCX).</li>
+        <li><strong>XL</strong> — berkas Excel (XLSX).</li>
+        <li><strong>IM</strong> — berkas gambar (JPG/PNG).</li>
+        <li><strong>PB</strong> — uji pembanding dengan dokumen acuan.</li>
+      </ul>
       <h3>Yang TIDAK diperiksa pada versi ini</h3>
       <ul>
         <li>Umur fisik kertas &amp; tinta (memerlukan dokumen fisik dan uji laboratorium kimia).</li>
@@ -439,7 +448,7 @@
       <h3>5 · Kesimpulan &amp; rekomendasi rujukan</h3>
       <ol>${s.referral.map(r => `<li>${esc(r)}</li>`).join("")}</ol>
       <h3>6 · Metodologi &amp; batasan ringkas</h3>
-      <p>Analisis lokal di browser mengikuti Spesifikasi SalmanForensik v1.0 (aturan U/PF/DC/XL/IM/PB). Tidak diperiksa: umur fisik kertas/tinta, validasi kriptografis penuh tanda tangan digital, OCR foto dokumen, dan isi terenkripsi tanpa kata sandi. Data teknis lengkap tersedia pada berkas JSON pendamping ber-ID sama.</p>
+      <p>Analisis lokal di browser mengikuti Spesifikasi SalmanForensik v1.0 (kode aturan: U = umur berkas, PF = PDF, DC = Word, XL = Excel, IM = gambar, PB = pembanding). Tidak diperiksa: umur fisik kertas/tinta, validasi kriptografis penuh tanda tangan digital, OCR foto dokumen, dan isi terenkripsi tanpa kata sandi. Data teknis lengkap tersedia pada berkas JSON pendamping ber-ID sama.</p>
       <p style="margin-top:24px" class="note">SalmanForensik — created by Ricco Abu Salman · Laporan ${esc(s.reportId)}</p>
     </div>`;
   }
