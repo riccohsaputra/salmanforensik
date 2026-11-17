@@ -104,3 +104,6 @@
   lemah. Tes engine naik 14 -> 19, core 23/23, sig 25/25.
   Footnote halaman web (appfoot) DIHAPUS atas permintaan Ricco; footer di
   dalam laporan PDF tetap (bagian dokumen laporan).
+- 2026-11-17 (footnote kredit, permintaan Ricco): footnote halaman yang tadinya
+  dihapus kini berisi kredit ringkas persis "created by Abu Salman" (tanpa teks
+  panjang lama). Footer laporan PDF tetap "created by Ricco Abu Salman".
