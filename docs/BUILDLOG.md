@@ -87,3 +87,7 @@
   langsung): scan editan fiksi vs asli teks → PB-01 tertangkap dari teks OCR;
   scan asli sendiri → OC-01 saja, tanpa temuan palsu. Tes tetap hijau
   (23/23, 14/14, 25/25). Addendum spek ditambahkan di docs/SPESIFIKASI.md.
+- 2026-11-17 (warna tombol utama, permintaan Ricco): tombol primer (.btn: Mulai
+  Pemeriksaan, Unduh Laporan PDF) kini memakai warna tetap #0FA985 dengan teks
+  putih di KEDUA tema (token --btn/--btn-text), lepas dari --accent palet.
+  Override teks gelap .btn khusus Moon Mist dihapus (sudah tidak relevan).

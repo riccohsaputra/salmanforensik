@@ -4,6 +4,7 @@
      Indigo Ocean #4A577D, Mystic Blue #716DAB, Travel #8ABEC7, Amulet #809980 */
   --bg: #EDE8DB; --card: #FBF9F4; --text: #262C40; --text2: #6E7191;
   --accent: #4A577D; --green: #5C7A5C; --orange: #B07D2B; --red: #A63D40;
+  --btn: #0FA985; --btn-text: #FFFFFF; /* tombol utama: warna tetap pilihan Ricco 2026-11-17 */
   --hairline: rgba(74,87,125,.18); --glass: rgba(251,249,244,.8);
   --chip: rgba(74,87,125,.08); --shadow: 0 8px 30px rgba(74,87,125,.12);
 }
@@ -13,6 +14,7 @@
      Azure Grey #AFB8C9, Apple White #E4DED2 */
   --bg: #2A2A2A; --card: #484B53; --text: #E4DED2; --text2: #AFB8C9;
   --accent: #AFB8C9; --green: #8FA98F; --orange: #C99A5B; --red: #C4737A;
+  --btn: #0FA985; --btn-text: #FFFFFF;
   --hairline: rgba(175,184,201,.2); --glass: rgba(42,42,42,.82);
   --chip: rgba(175,184,201,.1); --shadow: 0 8px 30px rgba(0,0,0,.45);
 }
@@ -47,7 +49,7 @@ header.topbar {
   font: inherit; font-size: .85rem; cursor: pointer; }
 .segmented button.active { background: var(--card); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,.18); font-weight: 600; }
 .btn { border: 0; border-radius: 10px; padding: 9px 16px; font: inherit; font-weight: 600; cursor: pointer;
-  background: var(--accent); color: #fff; transition: filter .15s, opacity .15s; }
+  background: var(--btn, var(--accent)); color: var(--btn-text, #fff); transition: filter .15s, opacity .15s; }
 .btn:hover { filter: brightness(1.08); }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 .btn.secondary { background: var(--chip); color: var(--text); }
@@ -103,7 +105,6 @@ details.opt { margin-top: 14px; } details.opt summary { cursor: pointer; font-we
 [data-theme="light"] .chip.susp { background: rgba(176,125,43,.16); }
 [data-theme="light"] .chip.info { background: rgba(113,109,171,.14); }
 /* Sentuhan palet Moon Mist khusus tema gelap */
-[data-theme="dark"] .btn { color: #22242A; }
 [data-theme="dark"] .privacy-badge { background: rgba(143,169,143,.18); border-color: rgba(143,169,143,.45); }
 [data-theme="dark"] .dropzone:hover, [data-theme="dark"] .dropzone.drag { background: rgba(175,184,201,.08); }
 [data-theme="dark"] .warn { background: rgba(201,154,91,.13); border-color: rgba(201,154,91,.45); }
