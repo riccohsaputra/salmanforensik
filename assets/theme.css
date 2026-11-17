@@ -1,9 +1,11 @@
 /* SalmanForensik — theme.css (token macOS, Spek Bagian 16) */
 :root, [data-theme="light"] {
-  --bg: #F5F5F7; --card: #FFFFFF; --text: #1D1D1F; --text2: #6E6E73;
-  --accent: #007AFF; --green: #34C759; --orange: #FF9500; --red: #FF3B30;
-  --hairline: rgba(0,0,0,.09); --glass: rgba(255,255,255,.72);
-  --chip: rgba(0,0,0,.05); --shadow: 0 8px 30px rgba(0,0,0,.06);
+  /* Tema terang: palet "Gentleman" (schemecolor.com) — Cassius #DDD5C0,
+     Indigo Ocean #4A577D, Mystic Blue #716DAB, Travel #8ABEC7, Amulet #809980 */
+  --bg: #EDE8DB; --card: #FBF9F4; --text: #262C40; --text2: #6E7191;
+  --accent: #4A577D; --green: #5C7A5C; --orange: #B07D2B; --red: #A63D40;
+  --hairline: rgba(74,87,125,.18); --glass: rgba(251,249,244,.8);
+  --chip: rgba(74,87,125,.08); --shadow: 0 8px 30px rgba(74,87,125,.12);
 }
 [data-theme="dark"] {
   --bg: #1C1C1E; --card: #2C2C2E; --text: #F5F5F7; --text2: #98989F;
@@ -25,7 +27,7 @@ header.topbar {
   border-bottom: 1px solid var(--hairline); flex-wrap: wrap;
 }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.15rem; letter-spacing: -.01em; }
-.brand .logo-wordmark { height: 42px; width: auto; display: block; color: #16181d; }
+.brand .logo-wordmark { height: 42px; width: auto; display: block; color: #4A577D; }
 [data-theme="dark"] .brand .logo-wordmark { color: #ffffff; }
 .privacy-badge { background: rgba(52,199,89,.14); color: var(--green); border: 1px solid rgba(52,199,89,.35);
   padding: 3px 10px; border-radius: 999px; font-size: .78rem; font-weight: 600; }
@@ -79,17 +81,24 @@ details.opt { margin-top: 14px; } details.opt summary { cursor: pointer; font-we
 .progress { height: 10px; background: var(--chip); border-radius: 99px; overflow: hidden; margin: 12px 0 4px; }
 .progress > div { height: 100%; background: var(--accent); width: 0%; transition: width .4s; border-radius: 99px; }
 .banner { border-radius: 16px; padding: 18px 20px; color: #fff; margin: 16px 0; }
-.banner.none { background: #248a3d; }
-.banner.weak { background: #cc6a00; }
-.banner.strong { background: #d70015; }
-.banner.insufficient { background: #636366; }
-.banner.judging { background: #48484a; }
+.banner.none { background: #5C7A5C; }
+.banner.weak { background: #B07D2B; }
+.banner.strong { background: #A63D40; }
+.banner.insufficient { background: #4A577D; }
+.banner.judging { background: #716DAB; }
 .banner h2 { margin: 0 0 4px; font-size: 1.35rem; }
 .chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
 .chip { background: var(--chip); border-radius: 999px; padding: 4px 12px; font-size: .85rem; font-weight: 600; }
 .chip.crit { background: rgba(255,59,48,.14); color: var(--red); }
 .chip.susp { background: rgba(255,149,0,.15); color: var(--orange); }
 .chip.info { background: rgba(0,122,255,.12); color: var(--accent); }
+/* Sentuhan palet Gentleman khusus tema terang */
+[data-theme="light"] .privacy-badge { background: rgba(128,153,128,.22); border-color: rgba(128,153,128,.5); }
+[data-theme="light"] .dropzone:hover, [data-theme="light"] .dropzone.drag { background: rgba(138,190,199,.16); }
+[data-theme="light"] .warn { background: rgba(221,213,192,.5); border-color: rgba(176,125,43,.5); }
+[data-theme="light"] .chip.crit { background: rgba(166,61,64,.13); }
+[data-theme="light"] .chip.susp { background: rgba(176,125,43,.16); }
+[data-theme="light"] .chip.info { background: rgba(113,109,171,.14); }
 .finding { border: 1px solid var(--hairline); border-left: 5px solid var(--accent); border-radius: 12px; padding: 12px 14px; margin: 10px 0; }
 .finding.critical { border-left-color: var(--red); } .finding.suspicious { border-left-color: var(--orange); }
 .finding h4 { margin: 0 0 4px; font-size: .98rem; }

@@ -40,3 +40,9 @@
   memuat bagian "Hasil pembanding". Verifikasi E2E 4 kasus: edit-vs-asli → Indikasi lemah
   (PB-01); beda dokumen total → Indikasi lemah (PB-02); tanpa pembanding → tidak berubah;
   berkas identik → PB-03 info. Tes Node tetap hijau (core 23/23, engine 14/14).
+- 2026-11-17 (tema terang "Gentleman", permintaan Ricco): palet schemecolor.com/gentleman
+  diterapkan ke tema TERANG saja (gelap tidak berubah): bg Cassius terang #EDE8DB, kartu
+  ivory #FBF9F4, teks indigo-gelap, aksen Indigo Ocean #4A577D (tombol, kicker, wordmark),
+  badge privasi & banner "bersih" Amulet #809980/#5C7A5C, banner lemah ochre #B07D2B,
+  banner kuat bata muted #A63D40, banner bukti-kurang Indigo Ocean, banner proses Mystic
+  Blue #716DAB, hover dropzone Travel #8ABEC7. Warna tetap FLAT (tanpa gradasi).
