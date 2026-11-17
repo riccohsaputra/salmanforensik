@@ -90,7 +90,18 @@
       if (mDate) out.timestamps.push(ev("pdf.signature.signingTime", "Tanda tangan digital (/M)", mDate[1], C.parsePdfDate(mDate[1]), "other", "B", "Waktu pada kamus tanda tangan; kekuatan penuhnya bergantung rantai sertifikat & TSA"));
       out.findings.push(finding("PF-06", "info", "tanda-tangan", "PDF memiliki tanda tangan digital", "Struktur PDF",
         mDate ? `Waktu tanda tangan tercatat ${mDate[1]}` : "Penanda /ByteRange ditemukan",
-        "Validasi rantai sertifikat & TSA secara kriptografis penuh tidak dilakukan di browser pada versi ini; tanda tangan dicatat sebagai bukti pendukung."));
+        "Validasi kriptografis (integritas, tanda tangan, dan identitas penanda tangan) dilakukan pada berkas ini; verifikasi kepercayaan rantai ke root eksternal tidak ditetapkan aplikasi."));
+      if (global.SFSig && global.SFSig.analyzeSignatures) {
+        try {
+          const sig = await global.SFSig.analyzeSignatures(buf);
+          if (sig) {
+            out.signatures = sig.signatures;
+            out.findings.push(...sig.findings);
+          }
+        } catch (e) {
+          out.moduleNotes.push("Modul validasi tanda tangan gagal: " + e.message);
+        }
+      }
     }
     out.meta.pageCountRaw = pageCountRaw;
 
@@ -437,7 +448,7 @@
 
   function baseResult(kind) {
     return { kind, timestamps: [], findings: [], embedded: [], fonts: [], meta: {}, text: "",
-      pageCount: null, moduleNotes: [], coveragePenalty: 0, lineageId: null };
+      pageCount: null, moduleNotes: [], coveragePenalty: 0, lineageId: null, signatures: [] };
   }
 
   global.SFEngine = { sha256hex, analyzePdf, analyzeDocx, analyzeXlsx, analyzeImage, evalFormula };

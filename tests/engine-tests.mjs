@@ -6,6 +6,7 @@ import { JSDOM } from "jsdom";
 import fs from "fs";
 import vm from "vm";
 
+process.chdir(new URL(".", import.meta.url).pathname);
 const dom = new JSDOM("<!doctype html><html><body></body></html>");
 global.DOMParser = dom.window.DOMParser;
 const load = (p) => vm.runInThisContext(fs.readFileSync(p, "utf8"), { filename: p });
@@ -13,6 +14,7 @@ load("../vendor/jszip.min.js");
 import { createRequire } from "module";
 global.exifr = createRequire(import.meta.url)("../vendor/exifr.umd.js");
 load("../assets/core.js");
+load("../assets/sig.js");
 load("../assets/engine.js");
 
 const E = globalThis.SFEngine, C = globalThis.SFCore;

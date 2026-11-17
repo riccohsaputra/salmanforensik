@@ -55,3 +55,22 @@
 - 2026-11-17 (fix keterbacaan, laporan Ricco): tombol "Hapus Sesi" (.btn.danger) di tema
   gelap nyaris tak terbaca — merah dusty di atas Galaxy Black. Di tema gelap kini teks
   #EDA3A9 + latar tint merah + border lebih tegas; status disabled opacity dinaikkan.
+- 2026-11-17 (Fase 1: validasi kriptografis tanda tangan, ACC Ricco; dibangun
+  Antigravity dari brief docs/brief-fase1-sig.md, DIREVIEW & dikoreksi Rumi):
+  modul baru assets/sig.js — parser ASN.1/DER + CMS tulisan tangan, WebCrypto.
+  Uji integritas ByteRange vs messageDigest, verifikasi tanda tangan RSA/ECDSA,
+  identitas penanda tangan + penerbit + masa berlaku sertifikat, waktu TSA,
+  rantai sertifikat. Temuan SG-01 (integritas gagal, kritis), SG-02 (ttd tidak
+  valid, kritis), SG-03 (terverifikasi, info), SG-04 (SHA-1), SG-05 (sertifikat
+  kedaluwarsa/belum berlaku), SG-06 (jangkauan berkas). Koreksi supervisor:
+  (1) OID hash tak dikenal TIDAK lagi ditebak SHA-256 (cegah SG-01 palsu);
+  (2) kegagalan proses algoritma tak didukung (RSA-PSS/SHA-224) = "tidak dapat
+  dipastikan", bukan SG-02; (3) SG-06 dikalibrasi: hanya dari ttd jangkauan
+  terakhir, dan jadi INFO bila integritas terbukti utuh (kasus nyata BSrE:
+  dokumen asli ditambah penggabungan SPPD sesudah penandatanganan);
+  (4) jendela pencarian /M & /SubFilter diperlebar melewati blob /Contents
+  (kasus BSrE jaraknya ±65 KB). Verifikasi E2E dokumen BSrE asli (SAFARI
+  Kemenag, BSRE CA DS G1, Root CA Indonesia DS G1): integritas utuh + ttd valid
+  + kesimpulan bersih; salinan diubah 1 byte → SG-01 kritis → "Indikasi kuat".
+  Tes: core 23/23, engine 14/14, sig 25/25 (suite baru tests/sig-tests.mjs,
+  fixture bertanda tangan sungguhan via openssl: RSA, ECDSA, SHA-1, tamper).

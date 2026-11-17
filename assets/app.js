@@ -396,9 +396,32 @@
     if (res.meta.app) metaRows.push(["Aplikasi pembuat", esc(JSON.stringify(res.meta.app))]);
     if (res.meta.exif) metaRows.push(["EXIF ringkas", esc(JSON.stringify(res.meta.exif))]);
     if (res.meta.sheets) metaRows.push(["Daftar sheet", esc(res.meta.sheets.join(", "))]);
+    let sigCards = "";
+    if (res.signatures && res.signatures.length) {
+      sigCards = `<h3>Tanda tangan digital (${res.signatures.length})</h3>` +
+        res.signatures.map((sig, i) => `
+          <div class="finding ${sig.integrity === 'fail' || sig.sigValid === false ? 'critical' : (sig.digestAlg === 'SHA-1' || !sig.coversWholeFile ? 'suspicious' : 'info')}">
+            <h4>Tanda Tangan #${i + 1}: ${esc(sig.signerCN || "Tanpa Nama")}</h4>
+            ${kvTable([
+              ["Penanda tangan", `${esc(sig.signerCN || "—")}${sig.signerOrg ? " (" + esc(sig.signerOrg) + ")" : ""}`],
+              ["Penerbit (Issuer)", esc(sig.issuer || "—")],
+              ["Nomor seri", `<span class="mono">${esc(sig.serial || "—")}</span>`],
+              ["Status integritas", sig.integrity === "ok" ? '<span class="chip info">Utuh (hash cocok)</span>' : (sig.integrity === "fail" ? '<span class="chip crit">GAGAL — dokumen berubah</span>' : '<span class="chip">Tidak dapat dipastikan</span>')],
+              ["Status verifikasi tanda tangan", sig.sigValid === true ? '<span class="chip info">Valid secara kriptografis</span>' : (sig.sigValid === false ? '<span class="chip crit">TIDAK VALID</span>' : '<span class="chip">Tidak dapat dipastikan</span>')],
+              ["Waktu tanda tangan", sig.signingTime ? esc(C.fmtWIB(sig.signingTime)) : "Tidak tercatat"],
+              ["Waktu TSA (stempel waktu)", sig.tsaTime ? esc(C.fmtWIB(sig.tsaTime)) : "Tidak ada"],
+              ["Masa berlaku sertifikat", (sig.notBefore ? esc(C.fmtWIB(sig.notBefore)) : "—") + " s/d " + (sig.notAfter ? esc(C.fmtWIB(sig.notAfter)) : "—")],
+              ["Algoritma", `${esc(sig.digestAlg || "—")}${sig.subFilter ? " · " + esc(sig.subFilter) : ""}`],
+              ["Rantai teratas", esc(sig.chainTop || "—")],
+              ["Jangkauan berkas", sig.coversWholeFile ? "Mencakup seluruh berkas (mencapai EOF)" : '<span class="chip susp">Ada konten di luar jangkauan tanda tangan</span>']
+            ])}
+          </div>
+        `).join("");
+    }
     $("#tab-struktur").innerHTML = `<div class="card"><h2>Struktur &amp; objek</h2>
       ${kvTable(metaRows.length ? metaRows : [["—", "Tidak ada metadata terstruktur"]])}
       <h3>Font terdeteksi</h3><div class="chips">${res.fonts.length ? res.fonts.map(f => `<span class="chip">${esc(f)}</span>`).join("") : '<span class="note">Tidak ada / tidak berlaku</span>'}</div>
+      ${sigCards}
       <h3>Objek sisipan (${res.embedded.length})</h3>
       ${res.embedded.length ? kvTable(res.embedded.map(o => [o.location, `${esc(o.kind)} · ${humanSize(o.sizeBytes || 0)}<br><span class="mono">${esc(o.sha256 || "—")}</span>${o.exif ? "<br>EXIF: " + esc(JSON.stringify(o.exif)) + (o.exifDate ? " · " + esc(C.fmtWIB(o.exifDate)) : "") : ""}`])) : "<p class='note'>Tidak ditemukan objek media tertanam.</p>"}
       ${res.moduleNotes.length ? `<h3>Catatan modul</h3><ul>${res.moduleNotes.map(n => `<li>${esc(n)}</li>`).join("")}</ul>` : ""}</div>`;
@@ -438,7 +461,7 @@
       <h3>Yang TIDAK diperiksa pada versi ini</h3>
       <ul>
         <li>Umur fisik kertas &amp; tinta (memerlukan dokumen fisik dan uji laboratorium kimia).</li>
-        <li>Validasi kriptografis penuh rantai sertifikat tanda tangan digital &amp; TSA (dicatat keberadaannya sebagai bukti pendukung).</li>
+        <li>Kepercayaan rantai sertifikat ke root eksternal (otoritas) tidak ditetapkan aplikasi — status integritas &amp; identitas ditampilkan apa adanya.</li>
         <li>OCR pada foto dokumen dan dekode titik kuning printer (Machine Identification Code) — riset lanjutan.</li>
         <li>Isi yang terenkripsi di balik kata sandi berkas, bila kata sandi tidak diberikan.</li>
       </ul>
@@ -468,6 +491,20 @@
       ${kvTable([["Berkas tersangka", esc(s.suspectFile.name)], ["Jenis", esc(KIND_LABEL[s.suspectKind])], ["Ukuran", humanSize(s.suspectFile.size)], ["SHA-256", `<span class="mono">${esc(s.suspectHash)}</span>`],
         ["Pembanding", s.refFile ? esc(s.refFile.name) + `<br><span class="mono">${esc(s.refHash)}</span>` : "Tidak ada"],
         ["Pemeriksa", esc(s.ctx.examiner || "—")], ["Jenis dokumen (konteks)", esc(s.ctx.type)], ["Penerbit (konteks)", esc(s.ctx.issuer || "—")]])}
+      ${res.signatures && res.signatures.length ? `
+      <h4 style="margin-top:14px">Tanda tangan digital (${res.signatures.length})</h4>
+      ${res.signatures.map((sig, i) => kvTable([
+        ["Penanda tangan #" + (i + 1), `${esc(sig.signerCN || "—")}${sig.signerOrg ? " (" + esc(sig.signerOrg) + ")" : ""}`],
+        ["Penerbit sertifikat", esc(sig.issuer || "—")],
+        ["Status integritas", sig.integrity === "ok" ? "Utuh (hash cocok)" : (sig.integrity === "fail" ? "GAGAL — dokumen berubah" : "Tidak dapat dipastikan")],
+        ["Status verifikasi tanda tangan", sig.sigValid === true ? "Valid secara kriptografis" : (sig.sigValid === false ? "TIDAK VALID" : "Tidak dapat dipastikan")],
+        ["Waktu tanda tangan", sig.signingTime ? esc(C.fmtWIB(sig.signingTime)) : "Tidak tercatat"],
+        ["Waktu TSA (stempel waktu)", sig.tsaTime ? esc(C.fmtWIB(sig.tsaTime)) : "Tidak ada"],
+        ["Masa berlaku sertifikat", (sig.notBefore ? esc(C.fmtWIB(sig.notBefore)) : "—") + " s/d " + (sig.notAfter ? esc(C.fmtWIB(sig.notAfter)) : "—")],
+        ["Algoritma", `${esc(sig.digestAlg || "—")}${sig.subFilter ? " · " + esc(sig.subFilter) : ""}`],
+        ["Jangkauan berkas", sig.coversWholeFile ? "Mencakup seluruh berkas" : "Ada konten di luar jangkauan tanda tangan"]
+      ])).join("")}
+      ` : ""}
       <h3>3 · Profil umur</h3>
       <p>Klaim: ${s.claimDate ? esc(C.fmtWIB(s.claimDate)) : "tidak tersedia"}. Bukti internal paling awal: ${evs.length ? esc(C.fmtWIB(evs[0].date)) : "—"}. Seluruh bukti waktu (${evs.length}):</p>
       ${kvTable(evs.map(t => [esc(C.fmtWIB(t.date)), `${esc(t.location)} · <span class="mono">${esc(t.source)}</span> · mentah: <span class="mono">${esc(t.rawValue)}</span> · keandalan ${esc(t.reliability)}`]))}
@@ -482,7 +519,7 @@
       <h3>${s.comparison ? "6" : "5"} · Kesimpulan &amp; rekomendasi rujukan</h3>
       <ol>${s.referral.map(r => `<li>${esc(r)}</li>`).join("")}</ol>
       <h3>${s.comparison ? "7" : "6"} · Metodologi &amp; batasan ringkas</h3>
-      <p>Analisis lokal di browser mengikuti Spesifikasi SalmanForensik v1.0 (kode aturan: U = umur berkas, PF = PDF, DC = Word, XL = Excel, IM = gambar, PB = pembanding). Tidak diperiksa: umur fisik kertas/tinta, validasi kriptografis penuh tanda tangan digital, OCR foto dokumen, dan isi terenkripsi tanpa kata sandi. Data teknis lengkap tersedia pada berkas JSON pendamping ber-ID sama.</p>
+      <p>Analisis lokal di browser mengikuti Spesifikasi SalmanForensik v1.0 (kode aturan: U = umur berkas, PF = PDF, DC = Word, XL = Excel, IM = gambar, PB = pembanding). Tidak diperiksa: umur fisik kertas/tinta, kepercayaan rantai sertifikat ke root eksternal (otoritas) tidak ditetapkan aplikasi — status integritas &amp; identitas ditampilkan apa adanya, OCR foto dokumen, dan isi terenkripsi tanpa kata sandi. Data teknis lengkap tersedia pada berkas JSON pendamping ber-ID sama.</p>
       <p style="margin-top:24px" class="note">SalmanForensik — created by Ricco Abu Salman · Laporan ${esc(s.reportId)}</p>
     </div>`;
   }
@@ -498,10 +535,11 @@
       timestamps: res.timestamps.filter(t => t.date).map(t => ({ source: t.source, location: t.location, rawValue: t.rawValue, normalizedUtc: t.date.toISOString(), role: t.role, reliability: t.reliability, note: t.note })),
       fonts: res.fonts, embeddedObjects: res.embedded.map(o => ({ kind: o.kind, location: o.location, sizeBytes: o.sizeBytes, sha256: o.sha256 || null })),
       meta: res.meta, findings: res.findings,
+      signatures: res.signatures || [],
       comparison: s.comparison ? { relation: s.comparison.relation, hashEqual: s.comparison.hashEqual, lineageEqual: s.comparison.lineageEqual, sharedEmbeddedCount: s.comparison.sharedEmbedded.length } : null,
       conclusion: { category: s.conclusion.key, label: s.conclusion.label, coverageIndex: +s.coverage.toFixed(2), partial: s.partial },
       referral: s.referral,
-      limitations: ["Screening awal otomatis — bukan penetapan keaslian.", "Umur fisik kertas/tinta tidak diperiksa.", "Validasi kriptografis penuh tanda tangan digital tidak dilakukan.", "OCR foto dokumen tidak dijalankan pada versi ini."],
+      limitations: ["Screening awal otomatis — bukan penetapan keaslian.", "Umur fisik kertas/tinta tidak diperiksa.", "Kepercayaan rantai sertifikat ke root eksternal (otoritas) tidak ditetapkan aplikasi — status integritas & identitas ditampilkan apa adanya.", "OCR foto dokumen tidak dijalankan pada versi ini."],
       sensitivityNotice: "Berkas ini berisi metadata dan temuan pemeriksaan dokumen. Perlakukan sebagai data sensitif."
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
