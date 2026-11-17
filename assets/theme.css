@@ -112,6 +112,10 @@ details.opt { margin-top: 14px; } details.opt summary { cursor: pointer; font-we
 [data-theme="dark"] .chip.info { background: rgba(175,184,201,.15); }
 [data-theme="dark"] .segmented { background: rgba(175,184,201,.12); }
 [data-theme="dark"] input, [data-theme="dark"] select, [data-theme="dark"] textarea { background: #34373E; color: var(--text); border-color: rgba(175,184,201,.25); }
+/* Tombol bahaya (Hapus Sesi) di tema gelap: merah dusty var(--red) terlalu gelap
+   di atas Galaxy Black — terangin teks + beri latar tint (temuan Ricco 2026-11-17) */
+[data-theme="dark"] .btn.danger { color: #EDA3A9; border-color: rgba(237,163,169,.6); background: rgba(196,115,122,.16); }
+[data-theme="dark"] .btn.danger:disabled { opacity: .6; }
 .finding { border: 1px solid var(--hairline); border-left: 5px solid var(--accent); border-radius: 12px; padding: 12px 14px; margin: 10px 0; }
 .finding.critical { border-left-color: var(--red); } .finding.suspicious { border-left-color: var(--orange); }
 .finding h4 { margin: 0 0 4px; font-size: .98rem; }

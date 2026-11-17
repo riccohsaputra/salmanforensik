@@ -52,3 +52,6 @@
   dengan teks gelap), wordmark Apple White, hairline/chip turunan Azure; warna semantik
   dimuted ala kabut (sage #8FA98F, amber #C99A5B, merah dusty #C4737A); input lebih gelap
   dari kartu. Banner kesimpulan tetap keluarga Gentleman (flat, terbaca di dua tema).
+- 2026-11-17 (fix keterbacaan, laporan Ricco): tombol "Hapus Sesi" (.btn.danger) di tema
+  gelap nyaris tak terbaca — merah dusty di atas Galaxy Black. Di tema gelap kini teks
+  #EDA3A9 + latar tint merah + border lebih tegas; status disabled opacity dinaikkan.
