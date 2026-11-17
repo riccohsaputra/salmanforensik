@@ -20,7 +20,7 @@
     return m ? m[1].toLowerCase() : "";
   }
 
-  const EXT_TYPE = { pdf: "pdf", docx: "ooxml-word", xlsx: "ooxml-excel", jpg: "jpeg", jpeg: "jpeg", png: "png" };
+  const EXT_TYPE = { pdf: "pdf", docx: "ooxml-word", xlsx: "ooxml-excel", odt: "opendocument-text", ods: "opendocument-spreadsheet", jpg: "jpeg", jpeg: "jpeg", png: "png" };
 
   /* ---------- Parsing tanggal ---------- */
   // PDF: D:YYYYMMDDHHmmSS+07'00' / D:YYYYMMDD / variasi Z

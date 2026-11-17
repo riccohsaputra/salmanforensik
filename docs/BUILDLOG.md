@@ -91,3 +91,16 @@
   Pemeriksaan, Unduh Laporan PDF) kini memakai warna tetap #0FA985 dengan teks
   putih di KEDUA tema (token --btn/--btn-text), lepas dari --accent palet.
   Override teks gelap .btn khusus Moon Mist dihapus (sudah tidak relevan).
+- 2026-11-17 (Fase 3: format LibreOffice + hapus footnote, permintaan Ricco):
+  dukungan ODT (Writer) & ODS (Calc) — dibangun Antigravity dari brief
+  docs/brief-fase3-odf.md, direview Rumi. Deteksi dari mimetype OpenDocument
+  di dalam ZIP. analyzeOdt: meta.xml (generator, creation-date, dc:date,
+  editing-cycles), teks content.xml, font, objek tertanam. analyzeOds: nilai
+  sel + cek rumus vs nilai cache (normalisasi rumus ODF dua lintasan).
+  Aturan OD-01 (siklus penyuntingan, info), OD-02 (tanggal mustahil,
+  suspicious), OD-03 (nilai cache rumus != hitung ulang, suspicious).
+  E2E fixture LibreOffice 24.2 ASLI: ODT bersih, ODS bersih, ODS bernilai
+  cache dimanipulasi (4.000.000 -> 9.999.999) tertangkap OD-03 -> Indikasi
+  lemah. Tes engine naik 14 -> 19, core 23/23, sig 25/25.
+  Footnote halaman web (appfoot) DIHAPUS atas permintaan Ricco; footer di
+  dalam laporan PDF tetap (bagian dokumen laporan).

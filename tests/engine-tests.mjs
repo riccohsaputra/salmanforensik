@@ -57,5 +57,85 @@ t("EXIF DateTimeOriginal terbaca", img.timestamps.some(x => x.source === "exif.d
 t("model/software EXIF terbaca", !!(img.meta.exif && (img.meta.exif.model || img.meta.exif.software)), JSON.stringify(img.meta.exif));
 t("dimensi JPEG terbaca", img.meta.dimensions === "800×600", img.meta.dimensions);
 
+async function makeOdfZip(mimetype, metaXml, contentXml) {
+  const zip = new global.JSZip();
+  zip.file("mimetype", mimetype, { compression: "STORE" });
+  if (metaXml) zip.file("meta.xml", metaXml);
+  if (contentXml) zip.file("content.xml", contentXml);
+  return await zip.generateAsync({ type: "arraybuffer" });
+}
+
+console.log("ODT (Writer):");
+const odtMetaXml = `<?xml version="1.0" encoding="UTF-8"?>
+<office:document-meta xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+  xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0"
+  xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <office:meta>
+    <meta:generator>LibreOffice/7.3.7.2$Linux_X86_64</meta:generator>
+    <meta:initial-creator>Ricco</meta:initial-creator>
+    <dc:creator>Abu Salman</dc:creator>
+    <meta:creation-date>2023-05-01T10:00:00Z</meta:creation-date>
+    <dc:date>2023-05-02T12:00:00Z</dc:date>
+    <meta:editing-cycles>3</meta:editing-cycles>
+    <meta:editing-duration>PT1H20M</meta:editing-duration>
+  </office:meta>
+</office:document-meta>`;
+const odtContentXml = `<?xml version="1.0" encoding="UTF-8"?>
+<office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+  xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0">
+  <office:body>
+    <office:text>
+      <text:h text:outline-level="1">Surat Keterangan</text:h>
+      <text:p>Dokumen ini diterbitkan untuk keperluan verifikasi keabsahan.</text:p>
+    </office:text>
+  </office:body>
+</office:document-content>`;
+const odtBuf = await makeOdfZip("application/vnd.oasis.opendocument.text", odtMetaXml, odtContentXml);
+const odtOk = await E.analyzeOdt(odtBuf);
+t("meta creation-date terbaca sebagai timestamp", odtOk.timestamps.some(x => x.source === "odf.meta.creationDate" && x.date));
+t("teks content.xml terekstrak", /Surat Keterangan/.test(odtOk.text));
+t("OD-01 muncul untuk editing-cycles 3", odtOk.findings.some(f => f.ruleId === "OD-01" && f.severity === "info"));
+
+console.log("ODS (Calc):");
+const odsContentOk = `<?xml version="1.0" encoding="UTF-8"?>
+<office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+  xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0"
+  xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0">
+  <office:body>
+    <office:spreadsheet>
+      <table:table table:name="Lembar1">
+        <table:table-row>
+          <table:table-cell office:value-type="float" office:value="100"><text:p>100</text:p></table:table-cell>
+          <table:table-cell office:value-type="float" office:value="200"><text:p>200</text:p></table:table-cell>
+          <table:table-cell table:formula="of:=[.A1]+[.B1]" office:value-type="float" office:value="300"><text:p>300</text:p></table:table-cell>
+        </table:table-row>
+      </table:table>
+    </office:spreadsheet>
+  </office:body>
+</office:document-content>`;
+const odsOkBuf = await makeOdfZip("application/vnd.oasis.opendocument.spreadsheet", odtMetaXml, odsContentOk);
+const odsOk = await E.analyzeOds(odsOkBuf);
+t("sel rumus cocok tidak memunculkan OD-03", !odsOk.findings.some(f => f.ruleId === "OD-03"));
+
+const odsContentBad = `<?xml version="1.0" encoding="UTF-8"?>
+<office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+  xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0"
+  xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0">
+  <office:body>
+    <office:spreadsheet>
+      <table:table table:name="Lembar1">
+        <table:table-row>
+          <table:table-cell office:value-type="float" office:value="100"><text:p>100</text:p></table:table-cell>
+          <table:table-cell office:value-type="float" office:value="200"><text:p>200</text:p></table:table-cell>
+          <table:table-cell table:formula="of:=[.A1]+[.B1]" office:value-type="float" office:value="999"><text:p>999</text:p></table:table-cell>
+        </table:table-row>
+      </table:table>
+    </office:spreadsheet>
+  </office:body>
+</office:document-content>`;
+const odsBadBuf = await makeOdfZip("application/vnd.oasis.opendocument.spreadsheet", odtMetaXml, odsContentBad);
+const odsBad = await E.analyzeOds(odsBadBuf);
+t("OD-03 muncul untuk sel rumus tidak cocok", odsBad.findings.some(f => f.ruleId === "OD-03" && f.severity === "suspicious"));
+
 console.log(`\nHasil engine: ${pass} lulus, ${fail} gagal`);
 process.exit(fail ? 1 : 0);

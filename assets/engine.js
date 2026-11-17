@@ -383,6 +383,295 @@
     return out;
   }
 
+  /* ================= ODF bersama (ODT & ODS) ================= */
+  function odfTag(root, prefixed, local) {
+    let el = root.getElementsByTagName(prefixed)[0];
+    if (!el && local && root.getElementsByTagNameNS) el = root.getElementsByTagNameNS("*", local)[0];
+    if (!el && local) el = root.getElementsByTagName(local)[0];
+    return el ? el.textContent : null;
+  }
+  function odfEl(root, prefixed, local) {
+    let el = root.getElementsByTagName(prefixed)[0];
+    if (!el && local && root.getElementsByTagNameNS) el = root.getElementsByTagNameNS("*", local)[0];
+    if (!el && local) el = root.getElementsByTagName(local)[0];
+    return el || null;
+  }
+
+  async function parseOdfMeta(zip, out) {
+    if (!out) out = baseResult("odf");
+    const names = Object.keys(zip.files);
+    out.meta.parts = names.length;
+    for (const n of names) {
+      const f = zip.files[n];
+      if (f.date) out.timestamps.push(ev("zip.entry.date", "Entri ZIP: " + n, f.date.toISOString(), f.date, "other", "D",
+        "Waktu lokal tanpa zona pada kontainer ZIP; konteks saja"));
+    }
+    if (!zip.files["meta.xml"]) return out;
+    const metaStr = await zip.files["meta.xml"].async("string");
+    const doc = parseXml(metaStr);
+    const gen = odfTag(doc, "meta:generator", "generator");
+    if (gen) {
+      out.meta.generator = gen;
+      out.meta.techTexts = [gen];
+    }
+    const initialCreator = odfTag(doc, "meta:initial-creator", "initial-creator");
+    const creator = odfTag(doc, "dc:creator", "creator");
+    out.meta.creator = creator || initialCreator || null;
+    if (initialCreator) out.meta.initialCreator = initialCreator;
+
+    const creationDate = odfTag(doc, "meta:creation-date", "creation-date");
+    const modDate = odfTag(doc, "dc:date", "date");
+    let cdObj = null, mdObj = null;
+    if (creationDate) {
+      cdObj = C.parseAnyDate(creationDate);
+      if (cdObj) out.timestamps.push(ev("odf.meta.creationDate", "meta.xml", creationDate, cdObj, "creation", "B"));
+    }
+    if (modDate) {
+      mdObj = C.parseAnyDate(modDate);
+      if (mdObj) out.timestamps.push(ev("odf.meta.date", "meta.xml", modDate, mdObj, "modification", "B"));
+    }
+
+    const cyclesStr = odfTag(doc, "meta:editing-cycles", "editing-cycles");
+    const duration = odfTag(doc, "meta:editing-duration", "editing-duration");
+    const cycles = cyclesStr != null && !isNaN(parseInt(cyclesStr, 10)) ? parseInt(cyclesStr, 10) : null;
+    if (cycles != null) out.meta.editingCycles = cycles;
+    if (duration) out.meta.editingDuration = duration;
+
+    const statEl = odfEl(doc, "meta:document-statistic", "document-statistic");
+    if (statEl) {
+      const getAttr = (name) => statEl.getAttribute("meta:" + name) || statEl.getAttribute(name);
+      const pageCount = parseInt(getAttr("page-count"), 10);
+      const wordCount = parseInt(getAttr("word-count"), 10);
+      const paraCount = parseInt(getAttr("paragraph-count"), 10);
+      const tableCount = parseInt(getAttr("table-count"), 10);
+      const imageCount = parseInt(getAttr("image-count"), 10);
+      out.meta.statistics = {
+        pageCount: !isNaN(pageCount) ? pageCount : null,
+        wordCount: !isNaN(wordCount) ? wordCount : null,
+        paragraphCount: !isNaN(paraCount) ? paraCount : null,
+        tableCount: !isNaN(tableCount) ? tableCount : null,
+        imageCount: !isNaN(imageCount) ? imageCount : null
+      };
+      if (!isNaN(pageCount) && pageCount > 0) out.pageCount = pageCount;
+    }
+
+    if (cycles != null && cycles > 1) {
+      out.findings.push(finding("OD-01", "info", "struktur",
+        `Dokumen telah melalui ${cycles} siklus penyuntingan`, "meta.xml",
+        `${gen ? gen + " · " : ""}siklus penyuntingan: ${cycles}`,
+        "Dokumen tercatat telah melalui beberapa siklus penyuntingan dan penyimpanan dalam daur hidupnya."));
+    }
+
+    if (cdObj && mdObj && (cdObj.getTime() - mdObj.getTime() > 86400000)) {
+      out.findings.push(finding("OD-02", "suspicious", "struktur",
+        "Tanggal modifikasi mendahului tanggal pembuatan dokumen", "meta.xml",
+        `Pembuatan: ${creationDate} vs Modifikasi: ${modDate}`,
+        "Tanggal modifikasi tercatat lebih awal dari tanggal pembuatan lebih dari 1 hari; urutan kronologis ini tidak wajar pada dokumen normal.",
+        "medium"));
+    }
+
+    return out;
+  }
+
+  async function odfEmbedded(zip, out) {
+    const names = Object.keys(zip.files);
+    for (const n of names) {
+      if (/^(Pictures|Object|ObjectReplacements)\//i.test(n) && !zip.files[n].dir) {
+        const data = await zip.files[n].async("arraybuffer");
+        const item = {
+          kind: /^Pictures\//i.test(n) ? "media" : "object",
+          location: n,
+          sizeBytes: data.byteLength,
+          sha256: await sha256hex(data)
+        };
+        if (/\.jpe?g$/i.test(n) && global.exifr) {
+          try {
+            const ex = await global.exifr.parse(data, { tiff: true, exif: true, gps: false });
+            if (ex) {
+              item.exif = { make: ex.Make, model: ex.Model, software: ex.Software };
+              const d = ex.DateTimeOriginal || ex.CreateDate || ex.ModifyDate;
+              if (d) {
+                item.exifDate = C.parseAnyDate(d);
+                out.timestamps.push(ev("odf.media.exif", n, String(d), item.exifDate, "other", "B"));
+              }
+            }
+          } catch (e) { /* abaikan */ }
+        }
+        out.embedded.push(item);
+      }
+    }
+  }
+
+  /* ================= ODT (Writer) ================= */
+  async function analyzeOdt(buf) {
+    const out = baseResult("odt");
+    const zip = await loadZip(buf);
+    if (!zip.files["content.xml"]) throw new Error("content.xml tidak ditemukan — bukan ODT yang valid.");
+    await parseOdfMeta(zip, out);
+    await odfEmbedded(zip, out);
+
+    const cText = await zip.files["content.xml"].async("string");
+    const cDoc = parseXml(cText);
+
+    const paraEls = [...cDoc.getElementsByTagName("*")].filter(el => /^(text:)?(p|h)$/i.test(el.tagName || el.nodeName));
+    const paras = paraEls.map(p => p.textContent.trim()).filter(Boolean);
+    out.text = paras.join("\n");
+
+    const fontSet = new Set();
+    const extractFonts = (doc) => {
+      for (const el of doc.getElementsByTagName("*")) {
+        for (const attr of el.attributes) {
+          const name = attr.name.toLowerCase();
+          const local = (attr.localName || "").toLowerCase();
+          if (name === "style:font-name" || name === "svg:font-family" || local === "font-name" || local === "font-family") {
+            const val = attr.value.trim().replace(/^['"]|['"]$/g, "");
+            if (val) fontSet.add(val);
+          }
+        }
+      }
+    };
+    extractFonts(cDoc);
+    if (zip.files["styles.xml"]) {
+      const sText = await zip.files["styles.xml"].async("string");
+      const sDoc = parseXml(sText);
+      extractFonts(sDoc);
+    }
+    out.fonts = [...fontSet];
+    out.timestamps = out.timestamps.filter(Boolean);
+    return out;
+  }
+
+  /* ================= ODS (Calc) ================= */
+  function colToLetter(col) {
+    let temp = col, letter = "";
+    while (temp > 0) {
+      let rem = (temp - 1) % 26;
+      letter = String.fromCharCode(65 + rem) + letter;
+      temp = Math.floor((temp - 1) / 26);
+    }
+    return letter;
+  }
+
+  function normalizeOdfFormula(formula, sheetName) {
+    if (!formula || !formula.includes("=")) return null;
+    let form = formula.replace(/^[^=]*=/, "=");
+    let interSheet = false;
+    form = form.replace(/\[([^\]]+)\]/g, (match, inner) => {
+      const parts = inner.split(":");
+      const normParts = parts.map(p => {
+        p = p.trim();
+        if (p.startsWith(".")) return p.slice(1);
+        const dotIdx = p.lastIndexOf(".");
+        if (dotIdx !== -1) {
+          let sName = p.slice(0, dotIdx).replace(/^['"]|['"]$/g, "");
+          let cellRef = p.slice(dotIdx + 1);
+          if (sheetName && sName.toLowerCase() === sheetName.toLowerCase()) {
+            return cellRef;
+          } else {
+            interSheet = true;
+            return p;
+          }
+        }
+        return p;
+      });
+      return normParts.join(":");
+    });
+    if (interSheet) return null;
+    return form;
+  }
+
+  async function analyzeOds(buf) {
+    const out = baseResult("ods");
+    const zip = await loadZip(buf);
+    if (!zip.files["content.xml"]) throw new Error("content.xml tidak ditemukan — bukan ODS yang valid.");
+    await parseOdfMeta(zip, out);
+    await odfEmbedded(zip, out);
+
+    const cText = await zip.files["content.xml"].async("string");
+    const cDoc = parseXml(cText);
+
+    const tables = [...cDoc.getElementsByTagName("*")].filter(el => /^(table:)?table$/i.test(el.tagName || el.nodeName));
+    const allSheetNames = [];
+    let totalFormulaCells = 0;
+    const cellTexts = [];
+    const mismatches = [];
+
+    for (const tbl of tables) {
+      const sheetName = tbl.getAttribute("table:name") || tbl.getAttribute("name") || "Sheet";
+      allSheetNames.push(sheetName);
+
+      const rows = [...tbl.getElementsByTagName("*")].filter(el => /^(table:)?table-row$/i.test(el.tagName || el.nodeName));
+      let rowIdx = 1;
+      const values = {};
+      const sheetFormulaCells = [];
+
+      for (const row of rows) {
+        const repRow = parseInt(row.getAttribute("table:number-rows-repeated") || "1", 10);
+        const cells = [...row.getElementsByTagName("*")].filter(el => /^(table:)?table-cell$/i.test(el.tagName || el.nodeName));
+        let colIdx = 1;
+
+        for (const cell of cells) {
+          const repCol = parseInt(cell.getAttribute("table:number-columns-repeated") || "1", 10);
+          const cellRef = colToLetter(colIdx) + rowIdx;
+          const fAttr = cell.getAttribute("table:formula") || cell.getAttribute("formula");
+          const vAttr = cell.getAttribute("office:value");
+          const sAttr = cell.getAttribute("office:string-value");
+          const pText = cell.textContent.trim();
+
+          const numVal = vAttr != null && !isNaN(parseFloat(vAttr)) ? parseFloat(vAttr) : (!isNaN(parseFloat(pText)) ? parseFloat(pText) : null);
+          if (numVal != null) values[cellRef] = numVal;
+
+          const dispVal = sAttr || vAttr || pText;
+          if (dispVal && cellTexts.length < 2000) cellTexts.push(dispVal);
+
+          if (fAttr) {
+            totalFormulaCells++;
+            if (vAttr != null && !isNaN(parseFloat(vAttr))) {
+              sheetFormulaCells.push({ ref: cellRef, formula: fAttr, cached: parseFloat(vAttr), sheet: sheetName });
+            }
+          }
+
+          colIdx += isNaN(repCol) ? 1 : Math.max(1, repCol);
+        }
+
+        rowIdx += isNaN(repRow) ? 1 : Math.max(1, repRow);
+      }
+
+      for (const fc of sheetFormulaCells) {
+        const norm = normalizeOdfFormula(fc.formula, sheetName);
+        if (!norm) continue;
+        const calc = evalFormula(norm, values);
+        if (calc != null && Math.abs(calc - fc.cached) > 0.01) {
+          mismatches.push({
+            sheet: sheetName,
+            ref: fc.ref,
+            formula: norm,
+            cached: fc.cached,
+            calc: +calc.toFixed(4)
+          });
+        }
+      }
+    }
+
+    out.meta.sheetCount = allSheetNames.length;
+    out.meta.sheets = allSheetNames;
+    out.meta.formulaCellCount = totalFormulaCells;
+    out.pageCount = allSheetNames.length;
+    out.text = cellTexts.join(" ");
+
+    for (const m of mismatches.slice(0, 20)) {
+      out.findings.push(finding("OD-03", "suspicious", "konten",
+        "Nilai tersimpan sel rumus berbeda dari hasil hitung ulang",
+        m.sheet ? `${m.sheet}!${m.ref}` : m.ref,
+        `Sel ${m.ref}: rumus ${m.formula}, tersimpan ${m.cached}, hasil hitung ±${m.calc}`,
+        "Nilai tersimpan pada sel berbeda dari hasil evaluasi formula; pola ini dapat terjadi bila angka ditimpa manual tanpa menghitung ulang formula.",
+        "medium"));
+    }
+
+    out.timestamps = out.timestamps.filter(Boolean);
+    return out;
+  }
+
   /* ================= Gambar ================= */
   async function analyzeImage(buf, kind) {
     const out = baseResult(kind);
@@ -494,5 +783,5 @@
       textSource: "native", pageCount: null, moduleNotes: [], coveragePenalty: 0, lineageId: null, signatures: [] };
   }
 
-  global.SFEngine = { sha256hex, analyzePdf, analyzeDocx, analyzeXlsx, analyzeImage, evalFormula };
+  global.SFEngine = { sha256hex, analyzePdf, analyzeDocx, analyzeXlsx, analyzeOdt, analyzeOds, analyzeImage, evalFormula, parseOdfMeta };
 })(typeof window !== "undefined" ? window : globalThis);

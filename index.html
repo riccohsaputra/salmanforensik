@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SalmanForensik — Screening Forensik Dokumen Digital</title>
-<meta name="description" content="Screening awal forensik dokumen digital: telusuri umur, riwayat perubahan, dan indikasi manipulasi dokumen PDF, DOCX, XLSX, dan gambar — 100% diproses di browser Anda, tanpa unggah ke server.">
+<meta name="description" content="Screening awal forensik dokumen digital: telusuri umur, riwayat perubahan, dan indikasi manipulasi dokumen PDF, DOCX, XLSX, ODT, ODS, dan gambar — 100% diproses di browser Anda, tanpa unggah ke server.">
 <link rel="stylesheet" href="assets/theme.css">
 <link rel="icon" href="assets/logo-wordmark.svg" type="image/svg+xml">
 </head>
@@ -30,16 +30,16 @@
     <div class="card">
       <h2>Cara kerja — 3 langkah</h2>
       <p><strong>① Pilih dokumen</strong> (dan pembanding bila ada) → <strong>② Klik Mulai Pemeriksaan</strong> dan saksikan tahapannya berjalan → <strong>③ Terima hasil detail</strong>: timeline umur, temuan, kesimpulan screening, dan rekomendasi rujukan — lalu unduh laporan PDF + JSON teknisnya.</p>
-      <p class="note">Format yang didukung: PDF, DOCX, XLSX, JPG, PNG — termasuk foto dokumen hasil print sebagai berkas gambar. Dari foto, yang diperiksa adalah umur <em>berkas gambarnya</em> dan indikasi visual; umur fisik kertas/tinta memerlukan pemeriksaan dokumen fisik di laboratorium.</p>
+      <p class="note">Format yang didukung: PDF, DOCX, XLSX, ODT, ODS, JPG, PNG — termasuk foto dokumen hasil print sebagai berkas gambar. Dari foto, yang diperiksa adalah umur <em>berkas gambarnya</em> dan indikasi visual; umur fisik kertas/tinta memerlukan pemeriksaan dokumen fisik di laboratorium.</p>
     </div>
     <div class="card">
       <h2>1 · Dokumen yang diperiksa</h2>
       <div class="dropzone" id="drop-suspect" tabindex="0">
         <div class="big">📄</div>
         <div><strong>Tarik &amp; letakkan berkas di sini</strong>, atau klik untuk memilih</div>
-        <div class="note">PDF · DOCX · XLSX · JPG · PNG — maks dianjurkan 50 MB</div>
+        <div class="note">PDF · DOCX · XLSX · ODT · ODS · JPG · PNG — maks dianjurkan 50 MB</div>
       </div>
-      <input type="file" id="file-suspect" class="hidden" accept=".pdf,.docx,.xlsx,.jpg,.jpeg,.png">
+      <input type="file" id="file-suspect" class="hidden" accept=".pdf,.docx,.xlsx,.odt,.ods,.jpg,.jpeg,.png">
       <div id="suspect-card"></div>
       <div id="suspect-warn"></div>
 
@@ -50,7 +50,7 @@
           <div><strong>Dokumen pembanding asli</strong> — tarik &amp; letakkan atau klik</div>
           <div class="note">Perbandingan mengaktifkan uji garis keturunan &amp; perbedaan isi</div>
         </div>
-        <input type="file" id="file-ref" class="hidden" accept=".pdf,.docx,.xlsx,.jpg,.jpeg,.png">
+        <input type="file" id="file-ref" class="hidden" accept=".pdf,.docx,.xlsx,.odt,.ods,.jpg,.jpeg,.png">
         <div id="ref-card"></div>
       </details>
 
@@ -144,11 +144,6 @@
 
   <div id="print-area"></div>
 </main>
-
-<footer class="appfoot">
-  SalmanForensik — created by Ricco Abu Salman · Alat screening awal, bukan penetapan keaslian ·
-  Dokumen Anda tidak pernah dikirim ke server; tutup tab atau tekan <em>Hapus Sesi</em> untuk membersihkan sesi.
-</footer>
 
 <script src="vendor/jszip.min.js"></script>
 <script src="vendor/exifr.umd.js"></script>

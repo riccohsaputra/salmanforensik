@@ -69,14 +69,19 @@
         const zip = await JSZip.loadAsync(await file.arrayBuffer());
         if (zip.files["word/document.xml"]) kind = "docx";
         else if (zip.files["xl/workbook.xml"]) kind = "xlsx";
-        else kind = "zip-lain";
+        else if (zip.files["mimetype"]) {
+          const mime = (await zip.files["mimetype"].async("string")).trim();
+          if (mime.includes("opendocument.text")) kind = "odt";
+          else if (mime.includes("opendocument.spreadsheet")) kind = "ods";
+          else kind = "zip-lain";
+        } else kind = "zip-lain";
       } catch (e) { kind = "zip-lain"; }
     }
     if (t === "jpeg") kind = "jpeg";
     return kind;
   }
-  const KIND_LABEL = { pdf: "PDF", docx: "DOCX (Word)", xlsx: "XLSX (Excel)", jpeg: "Gambar JPEG", png: "Gambar PNG", "zip-lain": "ZIP (tidak didukung)", unknown: "Tidak dikenal" };
-  const KIND_ICON = { pdf: "📕", docx: "📘", xlsx: "📗", jpeg: "🖼️", png: "🖼️" };
+  const KIND_LABEL = { pdf: "PDF", docx: "DOCX (Word)", xlsx: "XLSX (Excel)", odt: "ODT (LibreOffice Writer)", ods: "ODS (LibreOffice Calc)", jpeg: "Gambar JPEG", png: "Gambar PNG", "zip-lain": "ZIP (tidak didukung)", unknown: "Tidak dikenal" };
+  const KIND_ICON = { pdf: "📕", docx: "📘", xlsx: "📗", odt: "📘", ods: "📗", jpeg: "🖼️", png: "🖼️" };
 
   async function onFile(which, file, cardEl, warnEl) {
     if (!file) return;
@@ -84,11 +89,11 @@
     session[which + "File"] = file; session[which + "Kind"] = kind;
     cardEl.innerHTML = `<div class="filecard"><span class="ic">${KIND_ICON[kind] || "📄"}</span>
       <div><strong>${esc(file.name)}</strong><br><span class="note">${KIND_LABEL[kind] || kind} · ${humanSize(file.size)} · terakhir diubah di perangkat: ${esc(C.fmtWIB(new Date(file.lastModified)))} (konteks sesi saja, keandalan sangat lemah)</span></div></div>`;
-    const supported = ["pdf", "docx", "xlsx", "jpeg", "png"].includes(kind);
+    const supported = ["pdf", "docx", "xlsx", "odt", "ods", "jpeg", "png"].includes(kind);
     const ext = C.extOf(file.name);
     let warn = "";
-    if (!supported) warn = "Format berkas ini di luar dukungan SalmanForensik (PDF, DOCX, XLSX, JPG, PNG).";
-    else if (C.EXT_TYPE[ext] && !kind.startsWith(C.EXT_TYPE[ext].replace("ooxml-word", "docx").replace("ooxml-excel", "xlsx")))
+    if (!supported) warn = "Format berkas ini di luar dukungan SalmanForensik (PDF, DOCX, XLSX, ODT, ODS, JPG, PNG).";
+    else if (C.EXT_TYPE[ext] && !kind.startsWith(C.EXT_TYPE[ext].replace("ooxml-word", "docx").replace("ooxml-excel", "xlsx").replace("opendocument-text", "odt").replace("opendocument-spreadsheet", "ods")))
       warn = `Ekstensi .${ext} tidak sesuai isi berkas yang terdeteksi sebagai ${KIND_LABEL[kind]}. Pemeriksaan mengikuti isi sebenarnya.`;
     if (file.size > 50 * 1048576) warn = (warn ? warn + " " : "") + "Berkas lebih dari 50 MB — pemeriksaan dapat berjalan lama dan berat di perangkat ini.";
     warnEl.innerHTML = warn ? `<div class="warn">⚠️ ${esc(warn)}</div>` : "";
@@ -175,6 +180,8 @@
       if (k === "pdf") res = await E.analyzePdf(sBuf, session.suspectFile.name);
       else if (k === "docx") res = await E.analyzeDocx(sBuf);
       else if (k === "xlsx") res = await E.analyzeXlsx(sBuf);
+      else if (k === "odt") res = await E.analyzeOdt(sBuf);
+      else if (k === "ods") res = await E.analyzeOds(sBuf);
       else res = await E.analyzeImage(sBuf, k);
       res.timestamps = (res.timestamps || []).filter(Boolean);
       session.result = res;
@@ -216,6 +223,8 @@
         if (rk === "pdf") refRes = await E.analyzePdf(rBuf, session.refFile.name);
         else if (rk === "docx") refRes = await E.analyzeDocx(rBuf);
         else if (rk === "xlsx") refRes = await E.analyzeXlsx(rBuf);
+        else if (rk === "odt") refRes = await E.analyzeOdt(rBuf);
+        else if (rk === "ods") refRes = await E.analyzeOds(rBuf);
         else if (["jpeg", "png"].includes(rk)) refRes = await E.analyzeImage(rBuf, rk);
         session.refResult = refRes || null;
         session.comparison = compare(session, res, refRes);
@@ -231,7 +240,7 @@
       const ageOk = res.timestamps.length > 0;
       let coverage = 1 - (res.coveragePenalty || 0);
       if (res.timestamps.length < 2) coverage -= 0.25;
-      if (!res.text && (k === "pdf" || k === "docx")) coverage -= 0.15;
+      if (!res.text && (k === "pdf" || k === "docx" || k === "odt")) coverage -= 0.15;
       if (session.partial) coverage -= 0.1;
       session.coverage = Math.max(0.1, Math.min(1, coverage));
       session.conclusion = C.conclude(res.findings, session.coverage, ageOk);
@@ -453,13 +462,14 @@
 
     /* Metodologi */
     $("#tab-metodologi").innerHTML = `<div class="card"><h2>Metodologi &amp; batasan</h2>
-      <p>Pemeriksaan mengikuti Spesifikasi SalmanForensik v1.0: akuisisi &amp; hash SHA-256, identifikasi magic bytes, ekstraksi metadata &amp; bukti waktu multi-sumber, pembangunan timeline dengan aturan U-01…U-10, pemeriksaan struktur/konten per format (PF/DC/XL/IM), uji pembanding (PB) bila ada, penilaian berbasis aturan deterministik, dan rekomendasi rujukan.</p>
+      <p>Pemeriksaan mengikuti Spesifikasi SalmanForensik v1.0: akuisisi &amp; hash SHA-256, identifikasi magic bytes, ekstraksi metadata &amp; bukti waktu multi-sumber, pembangunan timeline dengan aturan U-01…U-10, pemeriksaan struktur/konten per format (PF/DC/XL/OD/IM), uji pembanding (PB) bila ada, penilaian berbasis aturan deterministik, dan rekomendasi rujukan.</p>
       <h3>Keterangan kode aturan</h3>
       <ul>
         <li><strong>U</strong> — umur berkas (riwayat tanggal pembuatan &amp; perubahan).</li>
         <li><strong>PF</strong> — berkas PDF.</li>
         <li><strong>DC</strong> — berkas Word (DOCX).</li>
         <li><strong>XL</strong> — berkas Excel (XLSX).</li>
+        <li><strong>OD</strong> — OpenDocument (LibreOffice).</li>
         <li><strong>IM</strong> — berkas gambar (JPG/PNG).</li>
         <li><strong>PB</strong> — uji pembanding dengan dokumen acuan.</li>
       </ul>
@@ -525,7 +535,7 @@
       <h3>${s.comparison ? "6" : "5"} · Kesimpulan &amp; rekomendasi rujukan</h3>
       <ol>${s.referral.map(r => `<li>${esc(r)}</li>`).join("")}</ol>
       <h3>${s.comparison ? "7" : "6"} · Metodologi &amp; batasan ringkas</h3>
-      <p>Analisis lokal di browser mengikuti Spesifikasi SalmanForensik v1.0 (kode aturan: U = umur berkas, PF = PDF, DC = Word, XL = Excel, IM = gambar, PB = pembanding). Tidak diperiksa: umur fisik kertas/tinta, kepercayaan rantai sertifikat ke root eksternal (otoritas) tidak ditetapkan aplikasi — status integritas &amp; identitas ditampilkan apa adanya, dan isi terenkripsi tanpa kata sandi. OCR tersedia untuk dokumen pindaian (maks 5 halaman) memakai mesin Tesseract.js yang dimuat dari CDN saat dibutuhkan — dokumen tetap diproses lokal di peramban dan tidak dikirim ke server; tanpa koneksi internet OCR tidak dapat dimuat. Data teknis lengkap tersedia pada berkas JSON pendamping ber-ID sama.</p>
+      <p>Analisis lokal di browser mengikuti Spesifikasi SalmanForensik v1.0 (kode aturan: U = umur berkas, PF = PDF, DC = Word, XL = Excel, OD = OpenDocument (LibreOffice), IM = gambar, PB = pembanding). Tidak diperiksa: umur fisik kertas/tinta, kepercayaan rantai sertifikat ke root eksternal (otoritas) tidak ditetapkan aplikasi — status integritas &amp; identitas ditampilkan apa adanya, dan isi terenkripsi tanpa kata sandi. OCR tersedia untuk dokumen pindaian (maks 5 halaman) memakai mesin Tesseract.js yang dimuat dari CDN saat dibutuhkan — dokumen tetap diproses lokal di peramban dan tidak dikirim ke server; tanpa koneksi internet OCR tidak dapat dimuat. Data teknis lengkap tersedia pada berkas JSON pendamping ber-ID sama.</p>
       <p style="margin-top:24px" class="note">SalmanForensik — created by Ricco Abu Salman · Laporan ${esc(s.reportId)}</p>
     </div>`;
   }
