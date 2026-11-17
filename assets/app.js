@@ -7,6 +7,10 @@
   if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = "vendor/pdf.worker.min.js";
 
   const $ = (s) => document.querySelector(s);
+  (typeof window !== "undefined" ? window : globalThis).SFProgress = function (msg) {
+    const el = $("#progress-label");
+    if (el && msg) el.textContent = msg;
+  };
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
   const humanSize = (n) => n > 1048576 ? (n / 1048576).toFixed(2) + " MB" : n > 1024 ? (n / 1024).toFixed(1) + " KB" : n + " B";
@@ -430,6 +434,7 @@
     if (s.comparison) {
       const cp = s.comparison;
       $("#tab-pembanding").innerHTML = `<div class="card"><h2>Hasil pembanding</h2>
+        ${res.textSource === "ocr" ? '<p class="note">Teks tersangka berasal dari OCR</p>' : ""}
         ${kvTable([
           ["Hash identik", cp.hashEqual ? "Ya — berkas sama persis" : "Tidak"],
           ["Garis keturunan (ID dokumen)", cp.lineageEqual ? "Sama — kemungkinan satu sumber" : "Tidak terbukti sama / tidak tersedia"],
@@ -462,9 +467,10 @@
       <ul>
         <li>Umur fisik kertas &amp; tinta (memerlukan dokumen fisik dan uji laboratorium kimia).</li>
         <li>Kepercayaan rantai sertifikat ke root eksternal (otoritas) tidak ditetapkan aplikasi — status integritas &amp; identitas ditampilkan apa adanya.</li>
-        <li>OCR pada foto dokumen dan dekode titik kuning printer (Machine Identification Code) — riset lanjutan.</li>
+        <li>Dekode titik kuning printer (Machine Identification Code) — riset lanjutan.</li>
         <li>Isi yang terenkripsi di balik kata sandi berkas, bila kata sandi tidak diberikan.</li>
       </ul>
+      <p class="note">OCR tersedia untuk dokumen pindaian (maks 5 halaman) memakai mesin Tesseract.js yang dimuat dari CDN saat dibutuhkan — dokumen tetap diproses lokal di peramban dan tidak dikirim ke server; tanpa koneksi internet OCR tidak dapat dimuat.</p>
       <p class="note">Tidak adanya temuan bukan bukti keaslian. Metadata dapat diubah; kekuatan kesimpulan bergantung pada banyaknya sumber bukti yang saling independen. Rantai penguasaan yang dijamin aplikasi dimulai sejak berkas dimuat pada sesi ini.</p></div>`;
 
     buildPrintArea();
@@ -519,7 +525,7 @@
       <h3>${s.comparison ? "6" : "5"} · Kesimpulan &amp; rekomendasi rujukan</h3>
       <ol>${s.referral.map(r => `<li>${esc(r)}</li>`).join("")}</ol>
       <h3>${s.comparison ? "7" : "6"} · Metodologi &amp; batasan ringkas</h3>
-      <p>Analisis lokal di browser mengikuti Spesifikasi SalmanForensik v1.0 (kode aturan: U = umur berkas, PF = PDF, DC = Word, XL = Excel, IM = gambar, PB = pembanding). Tidak diperiksa: umur fisik kertas/tinta, kepercayaan rantai sertifikat ke root eksternal (otoritas) tidak ditetapkan aplikasi — status integritas &amp; identitas ditampilkan apa adanya, OCR foto dokumen, dan isi terenkripsi tanpa kata sandi. Data teknis lengkap tersedia pada berkas JSON pendamping ber-ID sama.</p>
+      <p>Analisis lokal di browser mengikuti Spesifikasi SalmanForensik v1.0 (kode aturan: U = umur berkas, PF = PDF, DC = Word, XL = Excel, IM = gambar, PB = pembanding). Tidak diperiksa: umur fisik kertas/tinta, kepercayaan rantai sertifikat ke root eksternal (otoritas) tidak ditetapkan aplikasi — status integritas &amp; identitas ditampilkan apa adanya, dan isi terenkripsi tanpa kata sandi. OCR tersedia untuk dokumen pindaian (maks 5 halaman) memakai mesin Tesseract.js yang dimuat dari CDN saat dibutuhkan — dokumen tetap diproses lokal di peramban dan tidak dikirim ke server; tanpa koneksi internet OCR tidak dapat dimuat. Data teknis lengkap tersedia pada berkas JSON pendamping ber-ID sama.</p>
       <p style="margin-top:24px" class="note">SalmanForensik — created by Ricco Abu Salman · Laporan ${esc(s.reportId)}</p>
     </div>`;
   }
@@ -539,7 +545,7 @@
       comparison: s.comparison ? { relation: s.comparison.relation, hashEqual: s.comparison.hashEqual, lineageEqual: s.comparison.lineageEqual, sharedEmbeddedCount: s.comparison.sharedEmbedded.length } : null,
       conclusion: { category: s.conclusion.key, label: s.conclusion.label, coverageIndex: +s.coverage.toFixed(2), partial: s.partial },
       referral: s.referral,
-      limitations: ["Screening awal otomatis — bukan penetapan keaslian.", "Umur fisik kertas/tinta tidak diperiksa.", "Kepercayaan rantai sertifikat ke root eksternal (otoritas) tidak ditetapkan aplikasi — status integritas & identitas ditampilkan apa adanya.", "OCR foto dokumen tidak dijalankan pada versi ini."],
+      limitations: ["Screening awal otomatis — bukan penetapan keaslian.", "Umur fisik kertas/tinta tidak diperiksa.", "Kepercayaan rantai sertifikat ke root eksternal (otoritas) tidak ditetapkan aplikasi — status integritas & identitas ditampilkan apa adanya.", "OCR tersedia untuk dokumen pindaian (maks 5 halaman) memakai mesin Tesseract.js yang dimuat dari CDN saat dibutuhkan — dokumen tetap diproses lokal di peramban dan tidak dikirim ke server; tanpa koneksi internet OCR tidak dapat dimuat."],
       sensitivityNotice: "Berkas ini berisi metadata dan temuan pemeriksaan dokumen. Perlakukan sebagai data sensitif."
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });

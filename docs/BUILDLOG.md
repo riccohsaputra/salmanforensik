@@ -74,3 +74,16 @@
   + kesimpulan bersih; salinan diubah 1 byte → SG-01 kritis → "Indikasi kuat".
   Tes: core 23/23, engine 14/14, sig 25/25 (suite baru tests/sig-tests.mjs,
   fixture bertanda tangan sungguhan via openssl: RSA, ECDSA, SHA-1, tamper).
+- 2026-11-17 (Fase 2: OCR dokumen pindaian, ACC Ricco; dibangun Antigravity dari
+  brief docs/brief-fase2-ocr.md, DIREVIEW Rumi): modul assets/ocr.js memuat
+  Tesseract.js v5 lazy dari CDN jsDelivr (biner WASM/traineddata tidak dapat
+  terbit via jalur rilis teks) — pengenalan 100% lokal di WASM, dokumen tidak
+  dikirim ke server; batasan ini ditulis eksplisit di Metodologi, laporan, dan
+  JSON. Pemicu: PDF tanpa lapisan teks (<20 karakter) dirender skala 2 dan
+  di-OCR maks 5 halaman (ind+eng); gambar tersangka juga di-OCR. Hasil masuk
+  out.text (textSource "ocr") sehingga mode pembanding & aturan teks bekerja
+  untuk dokumen scan; temuan OC-01 info + penalti cakupan 5%. E2E Rumi
+  (CDN diintersep ke salinan byte-identik karena Chromium VM tak punya egress
+  langsung): scan editan fiksi vs asli teks → PB-01 tertangkap dari teks OCR;
+  scan asli sendiri → OC-01 saja, tanpa temuan palsu. Tes tetap hijau
+  (23/23, 14/14, 25/25). Addendum spek ditambahkan di docs/SPESIFIKASI.md.

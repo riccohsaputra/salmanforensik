@@ -479,3 +479,25 @@ Urutan ini adalah urutan *pembangunan internal*; cakupan rilis MVP tetap seluruh
 Spesifikasi ini versi 1.0. Setiap perubahan keputusan terkunci (Bagian 3) wajib menaikkan nomor versi dokumen ini dan dicatat alasannya, agar pembangunan tidak pernah berjalan di atas keputusan yang sudah diganti secara diam-diam.
 
 *— Akhir Spesifikasi SalmanForensik v1.0 —*
+
+---
+
+## Addendum 2026-11-17 — Kemampuan Pasca-v1.0 (sudah terbit)
+
+Dua batasan awal v1.0 kini teratasi; addendum ini yang berlaku:
+
+1. **Validasi kriptografis tanda tangan PDF** (`assets/sig.js`, aturan SG-01 s.d.
+   SG-06): uji integritas ByteRange terhadap messageDigest, verifikasi tanda
+   tangan RSA/ECDSA via WebCrypto, identitas penanda tangan & penerbit
+   sertifikat, masa berlaku sertifikat, waktu stempel TSA, dan jangkauan berkas.
+   Yang tetap TIDAK ditetapkan aplikasi: kepercayaan rantai sertifikat ke root
+   eksternal (otoritas) — rantai ditampilkan apa adanya. Kalibrasi SG-06:
+   konten sesudah penandatanganan berstatus info bila integritas bagian yang
+   ditandatangani terbukti utuh.
+2. **OCR dokumen pindaian** (`assets/ocr.js`, aturan OC-01): Tesseract.js v5
+   (ind+eng) dimuat lazy dari CDN jsDelivr hanya saat dokumen tanpa lapisan
+   teks terdeteksi; pengenalan berjalan lokal (WASM), dokumen tidak dikirim ke
+   server. Batas screening: maks 5 halaman, penalti cakupan 5%. Tanpa koneksi
+   internet, OCR tidak dapat dimuat (dicatat sebagai catatan modul).
+3. Vonis keaslian tetap BUKAN keluaran aplikasi — posisi produk Bagian 2 tidak
+   berubah.

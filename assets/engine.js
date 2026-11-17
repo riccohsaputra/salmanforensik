@@ -176,6 +176,29 @@
         "Ditemukan teks berukuran sangat kecil", "Ekstraksi teks per halaman",
         `${tiny.length} potong teks < 3,5 pt, contoh hal. ${tiny[0].page}: “${tiny[0].str}”`,
         "Teks nyaris tak terbaca dapat dipakai menyembunyikan konten dari pembaca sambil tetap ada di dalam berkas."));
+      if ((out.text || "").trim().length < 20 && out.pageCount > 0 && global.SFOCR && typeof global.SFOCR.recognizePdf === "function") {
+        try {
+          const ocr = await global.SFOCR.recognizePdf(pdf);
+          if (ocr && (ocr.text || "").trim().length >= 20) {
+            out.text = ocr.text;
+            out.textSource = "ocr";
+            const obsPages = `${ocr.pages} halaman dipindai${ocr.capped ? " (dibatasi 5 halaman pertama)" : ""}`;
+            const obsConf = `rerata kepercayaan OCR ${ocr.confidence.toFixed(1)}%`;
+            out.findings.push(finding(
+              "OC-01",
+              "info",
+              "konten",
+              "Teks dokumen diperoleh lewat OCR (dokumen hasil pindaian)",
+              "Pengenalan optis (Tesseract.js)",
+              `${obsPages}, ${obsConf}`,
+              "Dokumen tidak memiliki lapisan teks sehingga analisis font/metadata internal terbatas; teks OCR dapat mengandung kesalahan baca sehingga temuan berbasis teks perlu ditafsirkan hati-hati."
+            ));
+            out.coveragePenalty = (out.coveragePenalty || 0) + 0.05;
+          }
+        } catch (e) {
+          out.moduleNotes.push("OCR tidak tersedia: " + (e && e.message ? e.message : String(e)));
+        }
+      }
     } catch (e) {
       out.moduleNotes.push("Render/ekstraksi teks pdf.js gagal: " + e.message + " (pemeriksaan struktur tetap berjalan).");
       out.coveragePenalty += 0.15;
@@ -441,6 +464,26 @@
         "Analisis piksel gambar", "Perbandingan gambar asli vs hasil kompresi-ulang JPEG kualitas 92%.",
         "ELA HANYA petunjuk awal berkepercayaan rendah: nilai tinggi dapat berasal dari pemrosesan kamera yang sah. Tidak dipakai sebagai bukti tunggal.", "low"));
     } catch (e) { out.moduleNotes.push("ELA tidak dijalankan: " + e.message); }
+    if (global.SFOCR && typeof global.SFOCR.recognizeImage === "function") {
+      try {
+        const ocr = await global.SFOCR.recognizeImage(buf, kind);
+        if (ocr && (ocr.text || "").trim().length >= 20) {
+          out.text = ocr.text;
+          out.textSource = "ocr";
+          out.findings.push(finding(
+            "OC-01",
+            "info",
+            "konten",
+            "Teks dokumen diperoleh lewat OCR (dokumen hasil pindaian)",
+            "Pengenalan optis (Tesseract.js)",
+            `1 halaman gambar dipindai, rerata kepercayaan OCR ${ocr.confidence.toFixed(1)}%`,
+            "Dokumen tidak memiliki lapisan teks sehingga analisis font/metadata internal terbatas; teks OCR dapat mengandung kesalahan baca sehingga temuan berbasis teks perlu ditafsirkan hati-hati."
+          ));
+        }
+      } catch (e) {
+        out.moduleNotes.push("OCR tidak tersedia: " + (e && e.message ? e.message : String(e)));
+      }
+    }
     out.pageCount = 1;
     out.timestamps = out.timestamps.filter(Boolean);
     return out;
@@ -448,7 +491,7 @@
 
   function baseResult(kind) {
     return { kind, timestamps: [], findings: [], embedded: [], fonts: [], meta: {}, text: "",
-      pageCount: null, moduleNotes: [], coveragePenalty: 0, lineageId: null, signatures: [] };
+      textSource: "native", pageCount: null, moduleNotes: [], coveragePenalty: 0, lineageId: null, signatures: [] };
   }
 
   global.SFEngine = { sha256hex, analyzePdf, analyzeDocx, analyzeXlsx, analyzeImage, evalFormula };
