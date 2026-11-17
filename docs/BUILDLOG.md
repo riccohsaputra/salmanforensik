@@ -21,3 +21,13 @@
   Dikerjakan Antigravity (Gemini 3.8 Flash High) setelah OpenCode hang tanpa hasil;
   diff direview baris demi baris oleh Rumi, tes tetap core 23/23 + engine 14/14,
   siklus tombol diuji klik di browser headless (Playwright + Chromium).
+- 2026-11-17 (revisi PF-04, ACC Ricco): uji lapangan dokumen resmi asli (ST/SPPD bertanda
+  tangan elektronik CAdES) menghasilkan false positive PF-04 — baris label formulir
+  (tebal+reguler), cap e-sign, dan font templat resmi terbaca sebagai "baris multi-font".
+  PF-04 ditulis ulang berbasis pola segmen font per baris: dihitung hanya pergantian font
+  di tengah baris (A-B-A) atau di ekor baris; dikecualikan pola label/judul, baris berlabel
+  ':' (termasuk baris tabel tergabung), segmen 1 karakter (glyph tanda kutip), baris cap
+  tanda tangan elektronik, dan kolom terpisah jauh. Verifikasi E2E di browser lokal:
+  dokumen asli → "Tidak ditemukan indikasi signifikan" (PF-04 hilang, PF-02/PF-06 tetap);
+  PDF sintetis sisipan font beda keluarga → PF-04 tetap memicu tepat 1 baris; korpus PDF
+  tanggal mundur → tetap "Indikasi kuat" via U-01. Tes Node: core 23/23, engine 14/14.

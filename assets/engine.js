@@ -107,18 +107,60 @@
           const size = Math.abs(it.transform[3]) || Math.hypot(it.transform[1], it.transform[3]);
           const y = Math.round(it.transform[5]);
           const key = p + ":" + y;
-          if (!lines.has(key)) lines.set(key, new Set());
-          if (it.fontName) lines.get(key).add(it.fontName);
+          if (!lines.has(key)) lines.set(key, []);
+          if (it.fontName) lines.get(key).push({ font: it.fontName, str: it.str, x: it.transform[4], w: it.width || (it.str.length * size * 0.5) });
           if (size > 0 && size < 3.5 && it.str.trim()) tiny.push({ page: p, str: it.str.slice(0, 40), size: size.toFixed(1) });
         }
       }
       out.text = fullText;
-      let mixed = 0;
-      for (const [, set] of lines) if (set.size > 1) mixed++;
+      /* PF-04 (direvisi 2026-11-17 setelah false positive pada dokumen resmi asli):
+         fontName pdf.js adalah ID sumber font (beda ID = beda font, mis. reguler vs
+         tebal pun beda ID), jadi yang dinilai adalah POLA pergantiannya dalam baris:
+         - DIHITUNG: font kembali berganti setelah sempat berganti (A-B-A, sisipan di
+           tengah kalimat), atau ekor baris berganti font setelah mayoritas baris
+           memakai satu font (ekor diketik ulang / token disisipkan di akhir).
+         - DIKECUALIKAN: segmen awal pendek diikuti font lain sampai akhir baris
+           (pola label/judul formulir), baris formulir yang memuat label bertanda
+           ':' (termasuk baris tabel yang tergabung pada tinggi sama), segmen
+           1 karakter (artefak substitusi glyph tanda kutip dsb.), baris cap tanda
+           tangan elektronik, dan beda font yang terpisah jauh horizontal. */
+      const isStampLine = (txt) => /ditandatangani secara elektronik|tanda tangan elektronik|token\s*:/i.test(txt);
+      let mixed = 0; let mixedExample = "";
+      for (const [, items] of lines) {
+        const lineText = items.map(i => i.str).join("");
+        if (isStampLine(lineText)) continue;
+        const sorted = [...items].sort((a, b) => a.x - b.x);
+        /* rangkum segmen font berurutan; lompat bila pergantian font terpisah jauh */
+        const segs = []; let columnSplit = false;
+        for (const it of sorted) {
+          const last = segs[segs.length - 1];
+          if (last && last.font === it.font) { last.chars += it.str.length; last.end = it.x + it.w; last.txt += it.str; continue; }
+          if (last && it.x - last.end > 30) { columnSplit = true; break; }
+          segs.push({ font: it.font, chars: it.str.length, end: it.x + it.w, txt: it.str });
+        }
+        if (columnSplit || segs.length < 2) continue;
+        /* gabung segmen 1 karakter (artefak substitusi glyph: tanda kutip dsb.) */
+        const merged = [];
+        for (const s of segs) {
+          const last = merged[merged.length - 1];
+          if (last && s.chars <= 1) { last.chars += s.chars; continue; }
+          merged.push({ font: s.font, chars: s.chars, txt: s.txt || "" });
+        }
+        /* baris yang memuat label bertanda ':' adalah baris formulir (label:nilai,
+           termasuk dua baris tabel yang tergabung pada tinggi yang sama) → wajar */
+        if (merged.some(s => (s.txt || "").includes(":"))) continue;
+        const total = merged.reduce((a, s) => a + s.chars, 0);
+        if (total < 4) continue;
+        let hit = false;
+        if (merged.length >= 3) hit = true;                     // A-B-A(-…) : font berganti lebih dari sekali
+        else if (merged.length === 2 && merged[0].chars >= total / 2) hit = true; // ekor baris berganti font
+        // sisa kasus: segmen awal minoritas + satu font lain sampai akhir = label/judul → wajar
+        if (hit) { mixed++; if (!mixedExample) mixedExample = lineText.trim().slice(0, 60); }
+      }
       if (mixed > 0) out.findings.push(finding("PF-04", "suspicious", "konten",
-        `${mixed} baris teks memakai lebih dari satu font`, "Ekstraksi teks per halaman (pdf.js)",
-        "Baris dengan campuran font terdeteksi pada posisi vertikal yang sama.",
-        "Penggantian kata/angka pada dokumen jadi kerap meninggalkan jejak font yang berbeda sendiri di dalam satu baris. Dokumen yang diketik wajar dalam satu templat umumnya konsisten."));
+        `${mixed} baris teks berganti font di tengah baris`, "Ekstraksi teks per halaman (pdf.js)",
+        `Contoh baris: “${mixedExample}”`,
+        "Penggantian kata/angka pada dokumen jadi kerap meninggalkan jejak pergantian font di tengah atau di ekor baris. Pola label/judul formulir (segmen awal berbeda, sisanya satu font), cap tanda tangan elektronik, dan kolom formulir terpisah tidak dihitung oleh aturan ini."));
       if (tiny.length) out.findings.push(finding("PF-05", "suspicious", "konten",
         "Ditemukan teks berukuran sangat kecil", "Ekstraksi teks per halaman",
         `${tiny.length} potong teks < 3,5 pt, contoh hal. ${tiny[0].page}: “${tiny[0].str}”`,
