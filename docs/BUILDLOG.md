@@ -107,3 +107,8 @@
 - 2026-11-17 (footnote kredit, permintaan Ricco): footnote halaman yang tadinya
   dihapus kini berisi kredit ringkas persis "created by Abu Salman" (tanpa teks
   panjang lama). Footer laporan PDF tetap "created by Ricco Abu Salman".
+- 2026-11-17 (perbaikan bahasa hero, masukan Ricco): kalimat "dokumen tidak
+  pernah meninggalkan browser" dinilai rancu; diganti redaksi yang gamblang:
+  "Seluruh pemeriksaan berjalan langsung di perangkat Anda — berkas tidak
+  pernah diunggah ke server, sehingga dokumen Anda tetap aman dan privat."
+  Sekalian "terima rekomendasi" -> "dapatkan rekomendasi", "&" -> "dan".
