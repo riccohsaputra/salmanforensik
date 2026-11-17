@@ -46,3 +46,9 @@
   badge privasi & banner "bersih" Amulet #809980/#5C7A5C, banner lemah ochre #B07D2B,
   banner kuat bata muted #A63D40, banner bukti-kurang Indigo Ocean, banner proses Mystic
   Blue #716DAB, hover dropzone Travel #8ABEC7. Warna tetap FLAT (tanpa gradasi).
+- 2026-11-17 (tema gelap "Moon Mist", permintaan Ricco): palet schemecolor.com/moon-mist
+  diterapkan ke tema GELAP saja: bg Galaxy Black #2A2A2A, kartu Gravity #484B53, teks
+  Apple White #E4DED2, teks sekunder & aksen Azure Grey #AFB8C9 (tombol jadi azure
+  dengan teks gelap), wordmark Apple White, hairline/chip turunan Azure; warna semantik
+  dimuted ala kabut (sage #8FA98F, amber #C99A5B, merah dusty #C4737A); input lebih gelap
+  dari kartu. Banner kesimpulan tetap keluarga Gentleman (flat, terbaca di dua tema).

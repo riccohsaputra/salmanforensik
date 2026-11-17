@@ -8,10 +8,13 @@
   --chip: rgba(74,87,125,.08); --shadow: 0 8px 30px rgba(74,87,125,.12);
 }
 [data-theme="dark"] {
-  --bg: #1C1C1E; --card: #2C2C2E; --text: #F5F5F7; --text2: #98989F;
-  --accent: #0A84FF; --green: #30D158; --orange: #FF9F0A; --red: #FF453A;
-  --hairline: rgba(255,255,255,.12); --glass: rgba(28,28,30,.72);
-  --chip: rgba(255,255,255,.08); --shadow: 0 8px 30px rgba(0,0,0,.35);
+  /* Tema gelap: palet "Moon Mist" (schemecolor.com) — Galaxy Black #2A2A2A,
+     Gravity #484B53, Gray Navy #646988, Oxford Grey #7E889F,
+     Azure Grey #AFB8C9, Apple White #E4DED2 */
+  --bg: #2A2A2A; --card: #484B53; --text: #E4DED2; --text2: #AFB8C9;
+  --accent: #AFB8C9; --green: #8FA98F; --orange: #C99A5B; --red: #C4737A;
+  --hairline: rgba(175,184,201,.2); --glass: rgba(42,42,42,.82);
+  --chip: rgba(175,184,201,.1); --shadow: 0 8px 30px rgba(0,0,0,.45);
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -28,7 +31,7 @@ header.topbar {
 }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.15rem; letter-spacing: -.01em; }
 .brand .logo-wordmark { height: 42px; width: auto; display: block; color: #4A577D; }
-[data-theme="dark"] .brand .logo-wordmark { color: #ffffff; }
+[data-theme="dark"] .brand .logo-wordmark { color: #E4DED2; }
 .privacy-badge { background: rgba(52,199,89,.14); color: var(--green); border: 1px solid rgba(52,199,89,.35);
   padding: 3px 10px; border-radius: 999px; font-size: .78rem; font-weight: 600; }
 .topbar .spacer { flex: 1; }
@@ -99,6 +102,16 @@ details.opt { margin-top: 14px; } details.opt summary { cursor: pointer; font-we
 [data-theme="light"] .chip.crit { background: rgba(166,61,64,.13); }
 [data-theme="light"] .chip.susp { background: rgba(176,125,43,.16); }
 [data-theme="light"] .chip.info { background: rgba(113,109,171,.14); }
+/* Sentuhan palet Moon Mist khusus tema gelap */
+[data-theme="dark"] .btn { color: #22242A; }
+[data-theme="dark"] .privacy-badge { background: rgba(143,169,143,.18); border-color: rgba(143,169,143,.45); }
+[data-theme="dark"] .dropzone:hover, [data-theme="dark"] .dropzone.drag { background: rgba(175,184,201,.08); }
+[data-theme="dark"] .warn { background: rgba(201,154,91,.13); border-color: rgba(201,154,91,.45); }
+[data-theme="dark"] .chip.crit { background: rgba(196,115,122,.18); }
+[data-theme="dark"] .chip.susp { background: rgba(201,154,91,.18); }
+[data-theme="dark"] .chip.info { background: rgba(175,184,201,.15); }
+[data-theme="dark"] .segmented { background: rgba(175,184,201,.12); }
+[data-theme="dark"] input, [data-theme="dark"] select, [data-theme="dark"] textarea { background: #34373E; color: var(--text); border-color: rgba(175,184,201,.25); }
 .finding { border: 1px solid var(--hairline); border-left: 5px solid var(--accent); border-radius: 12px; padding: 12px 14px; margin: 10px 0; }
 .finding.critical { border-left-color: var(--red); } .finding.suspicious { border-left-color: var(--orange); }
 .finding h4 { margin: 0 0 4px; font-size: .98rem; }
