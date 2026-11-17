@@ -31,3 +31,12 @@
   dokumen asli → "Tidak ditemukan indikasi signifikan" (PF-04 hilang, PF-02/PF-06 tetap);
   PDF sintetis sisipan font beda keluarga → PF-04 tetap memicu tepat 1 baris; korpus PDF
   tanggal mundur → tetap "Indikasi kuat" via U-01. Tes Node: core 23/23, engine 14/14.
+- 2026-11-17 (integrasi pembanding, ACC Ricco): audit menemukan hasil perbandingan (relasi
+  + diff teks) tidak pernah menjadi temuan — kesimpulan & laporan PDF mengabaikannya,
+  sehingga berkas editan vs aslinya pun berkesimpulan "Tidak ditemukan indikasi signifikan".
+  Perbaikan di compare(): PB-01 (isi berbeda dari pembanding, suspicious, memuat segmen
+  berbeda), PB-02 (kesamaan kata <25% → sangat berbeda / kemungkinan bukan dokumen yang
+  sama, suspicious), PB-03 (hash identik, info); similarity disimpan & laporan PDF kini
+  memuat bagian "Hasil pembanding". Verifikasi E2E 4 kasus: edit-vs-asli → Indikasi lemah
+  (PB-01); beda dokumen total → Indikasi lemah (PB-02); tanpa pembanding → tidak berubah;
+  berkas identik → PB-03 info. Tes Node tetap hijau (core 23/23, engine 14/14).

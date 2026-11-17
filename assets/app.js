@@ -295,6 +295,34 @@
         explanation: "Objek gambar yang sama persis (hash identik) muncul pada dua berkas berbeda. Untuk tanda tangan/stempel, kesamaan piksel-per-piksel adalah indikasi kuat penempelan salinan — tanda tangan wajar tidak pernah identik persis.",
         method: "Perbandingan hash objek SalmanForensik PB-06", confidence: "high" });
     if (s.text || r.text) out.diff = wordDiff(s.text, r.text);
+    /* Integrasi pembanding → temuan (2026-11-17): hasil perbandingan WAJIB masuk
+       hitungan kesimpulan & laporan, bukan hanya tampil di tab. */
+    const pb = (ruleId, severity, title, observed, explanation, confidence) =>
+      out.findings.push({ ruleId, severity, category: "pembanding", title, location: "Perbandingan dengan dokumen pembanding",
+        observed, explanation, method: "Perbandingan SalmanForensik " + ruleId, confidence });
+    if (out.hashEqual) {
+      pb("PB-03", "info", "Berkas identik dengan dokumen pembanding",
+        "Hash SHA-256 tersangka sama persis dengan pembanding.",
+        "Kedua berkas adalah salinan bit-per-bit yang sama; tidak ada perbedaan isi maupun struktur.", "high");
+    } else if (s.text && r.text) {
+      const tok = (t) => new Set(t.toLowerCase().split(/\s+/).filter(Boolean));
+      const setS = tok(s.text), setR = tok(r.text);
+      let shared = 0; for (const w of setS) if (setR.has(w)) shared++;
+      const sim = shared / Math.max(1, setS.size + setR.size - shared);
+      out.similarity = sim;
+      if (sim < 0.25) {
+        pb("PB-02", "suspicious", "Isi tersangka sangat berbeda dari dokumen pembanding",
+          `Kesamaan kata hanya ${Math.round(sim * 100)}% (${setS.size} kata khas tersangka vs ${setR.size} kata khas pembanding); garis keturunan juga tidak terbukti sama.`,
+          "Tersangka kemungkinan BUKAN versi dari dokumen pembanding. Pastikan berkas pembanding memang dokumen asli dari seri/dokumen yang sama; bila sudah benar, perbedaan sebesar ini berarti tersangka adalah dokumen lain atau isinya telah diganti menyeluruh.", "medium");
+      } else if (out.diff && (out.diff.segments.length || (out.diff.onlySuspect || 0) + (out.diff.onlyRef || 0) > 0)) {
+        const obs = out.diff.segments.length
+          ? out.diff.segments.slice(0, 4).map(sg => `tersangka “${sg.suspect || "—"}” ↔ pembanding “${sg.ref || "—"}”`).join("; ")
+          : `${out.diff.onlySuspect} kata khas tersangka dan ${out.diff.onlyRef} kata khas pembanding tidak berpadanan.`;
+        pb("PB-01", "suspicious", "Isi berbeda dari dokumen pembanding",
+          obs,
+          "Sebagian isi tersangka tidak sama dengan pembandingnya. Perubahan sebagian isi dari dokumen acuan adalah pola utama pemalsuan dokumen (angka, tanggal, nama, tujuan). Bila perubahan ini sah (revisi resmi), penerbit dokumen dapat mengonfirmasinya.", "medium");
+      }
+    }
     return out;
   }
 
@@ -445,9 +473,15 @@
       ${kvTable(evs.map(t => [esc(C.fmtWIB(t.date)), `${esc(t.location)} · <span class="mono">${esc(t.source)}</span> · mentah: <span class="mono">${esc(t.rawValue)}</span> · keandalan ${esc(t.reliability)}`]))}
       <h3>4 · Temuan utama</h3>
       ${res.findings.length ? res.findings.map((f, i) => findingCard(f, i)).join("") : "<p>Tidak ada temuan.</p>"}
-      <h3>5 · Kesimpulan &amp; rekomendasi rujukan</h3>
+      ${s.comparison ? `<h3>5 · Hasil pembanding</h3>
+      ${kvTable([["Relasi dinilai", esc(s.comparison.relation)], ["Hash identik", s.comparison.hashEqual ? "Ya" : "Tidak"],
+        ["Garis keturunan (ID dokumen)", s.comparison.lineageEqual ? "Sama" : "Tidak terbukti sama / tidak tersedia"],
+        ...(s.comparison.similarity != null ? [["Kesamaan kata dengan pembanding", Math.round(s.comparison.similarity * 100) + "%"]] : []),
+        ["Objek sisipan identik", s.comparison.sharedEmbedded.length ? s.comparison.sharedEmbedded.length + " objek" : "Tidak ada"]])}
+      ${s.comparison.diff && s.comparison.diff.segments.length ? "<p>Segmen berbeda (tersangka ↔ pembanding):</p><ul>" + s.comparison.diff.segments.map(sg => `<li>“${esc(sg.suspect) || "—"}” ↔ “${esc(sg.ref) || "—"}”</li>`).join("") + "</ul>" : ""}` : ""}
+      <h3>${s.comparison ? "6" : "5"} · Kesimpulan &amp; rekomendasi rujukan</h3>
       <ol>${s.referral.map(r => `<li>${esc(r)}</li>`).join("")}</ol>
-      <h3>6 · Metodologi &amp; batasan ringkas</h3>
+      <h3>${s.comparison ? "7" : "6"} · Metodologi &amp; batasan ringkas</h3>
       <p>Analisis lokal di browser mengikuti Spesifikasi SalmanForensik v1.0 (kode aturan: U = umur berkas, PF = PDF, DC = Word, XL = Excel, IM = gambar, PB = pembanding). Tidak diperiksa: umur fisik kertas/tinta, validasi kriptografis penuh tanda tangan digital, OCR foto dokumen, dan isi terenkripsi tanpa kata sandi. Data teknis lengkap tersedia pada berkas JSON pendamping ber-ID sama.</p>
       <p style="margin-top:24px" class="note">SalmanForensik — created by Ricco Abu Salman · Laporan ${esc(s.reportId)}</p>
     </div>`;
