@@ -537,6 +537,7 @@
       <h3>${s.comparison ? "7" : "6"} · Metodologi &amp; batasan ringkas</h3>
       <p>Analisis lokal di browser mengikuti Spesifikasi SalmanForensik v1.0 (kode aturan: U = umur berkas, PF = PDF, DC = Word, XL = Excel, OD = OpenDocument (LibreOffice), IM = gambar, PB = pembanding). Tidak diperiksa: umur fisik kertas/tinta, kepercayaan rantai sertifikat ke root eksternal (otoritas) tidak ditetapkan aplikasi — status integritas &amp; identitas ditampilkan apa adanya, dan isi terenkripsi tanpa kata sandi. OCR tersedia untuk dokumen pindaian (maks 5 halaman) memakai mesin Tesseract.js yang dimuat dari CDN saat dibutuhkan — dokumen tetap diproses lokal di peramban dan tidak dikirim ke server; tanpa koneksi internet OCR tidak dapat dimuat. Data teknis lengkap tersedia pada berkas JSON pendamping ber-ID sama.</p>
       <p style="margin-top:24px" class="note">SalmanForensik — created by Ricco Abu Salman · Laporan ${esc(s.reportId)}</p>
+      <p class="note">Versi Aplikasi 1.0.0</p>
     </div>`;
   }
   $("#btn-pdf").addEventListener("click", () => { buildPrintArea(); window.print(); });

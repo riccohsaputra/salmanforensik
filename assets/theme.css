@@ -133,6 +133,7 @@ table.kv th { color: var(--text2); font-weight: 600; width: 34%; }
 .tabs { margin-top: 8px; }
 .tabpage { display: none; } .tabpage.active { display: block; }
 footer.appfoot { text-align: center; color: var(--text2); padding: 26px 12px 40px; font-size: .9rem; }
+footer.appfoot .appver { font-size: .78rem; opacity: .7; margin-top: 4px; }
 .hidden { display: none !important; }
 .kicker { color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; font-size: .78rem; }
 @media print {
